@@ -1,25 +1,27 @@
-import { useParams } from 'react-router-dom';
-import Marquee from '../components/common/Marquee';
 import JobOffer from '../components/joboffer/JobOffer';
 import ApplyForm from '../components/apply/ApplyForm';
 import Numbers from '../components/numbers/Numbers';
-import Escrow from '../components/escrow/Escrow';
 import Testimonials from '../components/testimonials/Testimonials';
 import Team from '../components/team/Team';
 import Faq from '../components/faq/Faq';
 import SeoCopy from '../components/seocopy/SeoCopy';
+import { useApplyModal } from '../components/apply/ApplyModalHost';
 import { COUNTRY_OFFERS } from '../data/joboffers';
 import { COUNTRY_FAQ } from '../data/team';
 
 // Shared template for /work-in-poland|slovakia|serbia/
+// The hero uses the clean navy-to-blue theme gradient (no background photo and
+// no ghost headline text), and "Apply Now" opens the modal with this country's
+// program pre-selected.
 export default function CountryPage({ countryKey }) {
   const offer = COUNTRY_OFFERS[countryKey];
   const faqItems = COUNTRY_FAQ[countryKey];
+  const { openApply } = useApplyModal();
+  const program = `Work in ${offer.country}`;
 
   return (
     <>
       <section className="page-hero" data-component="page-hero">
-        <img src={offer.heroImage} alt="" />
         <div className="page-hero-inner">
           <span className="eyebrow">Genuine Job Offers, Visa Guidance, and Step-by-Step Support</span>
           <h1>{offer.heroTitle}</h1>
@@ -27,25 +29,28 @@ export default function CountryPage({ countryKey }) {
           <div className="hero-stats">
             <div>
               <div className="hero-stat-value">{offer.clientsStat}</div>
-              <div className="hero-stat-label">Happy<br />Clients</div>
+              <div className="hero-stat-label">
+                Happy
+                <br />
+                Clients
+              </div>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 14, marginTop: 30, flexWrap: 'wrap' }}>
-            <a href="#formform" className="btn btn-primary">Apply Now</a>
+          <div className="hero-actions">
+            <button type="button" className="btn btn-primary" onClick={() => openApply(program)}>
+              Apply Now
+            </button>
           </div>
           <div className="important-chips">
             <span className="chip">No sponsorship provided</span>
             <span className="chip">All programs are paid</span>
           </div>
         </div>
-        </section>
-
-      <Marquee text="Funds secured until documents are delivered" variant="navy" plus={false} />
+      </section>
 
       <JobOffer offer={offer} />
-      <ApplyForm program={`Work in ${offer.country}`} />
+      <ApplyForm program={program} />
       <Numbers />
-      <Escrow />
       <Testimonials />
       <Team />
       <Faq items={faqItems} />
