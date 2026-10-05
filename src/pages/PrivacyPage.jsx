@@ -1,5 +1,3 @@
-import Marquee from '../components/common/Marquee';
-
 // /privacy-policy/ — exact text from the original site (18 sections).
 const LAST_UPDATED = '30 April 2026';
 const CONTACT = {
@@ -12,7 +10,6 @@ const CONTACT = {
 export default function PrivacyPage() {
   return (
     <>
-      <Marquee text="Funds secured until documents are delivered" variant="navy" plus={false} />
       <div className="container privacy-page" data-component="privacy-policy">
         <article className="article" style={{ padding: '50px 20px 80px', margin: 0, maxWidth: 900 }}>
           <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '2.2rem', color: 'var(--color-ink-heading)', marginBottom: 14 }}>

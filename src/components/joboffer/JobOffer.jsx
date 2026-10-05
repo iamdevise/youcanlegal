@@ -55,14 +55,8 @@ export default function JobOffer({ offer, embedded = false }) {
                     </ol>
                   );
                 }
-                if (b.type === 'cost') {
-                  return (
-                    <div className="cost-callout" key={i}>
-                      <strong>💰 {b.text}</strong>
-                      <span className="price">{b.price}</span>
-                    </div>
-                  );
-                }
+                // Payment/price callouts are intentionally not rendered — the
+                // owner manages all payment content outside this site.
                 return null;
               })}
               <div className="notice-inline">

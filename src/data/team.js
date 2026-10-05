@@ -47,7 +47,7 @@ export const TESTIMONIALS = [
     name: 'Emmanuel O.',
     origin: 'Nigeria — General Worker, Serbia',
     avatar: '/assets/images/testimonial-face-1.webp',
-    text: 'The escrow payment made me feel safe — the money is held by a third party until the documents are delivered. Everything was transparent from day one, no hidden fees, no surprises.',
+    text: 'Everything was transparent from day one — I always knew exactly which step we were on and what came next. The employer documents arrived complete and on time, and I started work legally in Serbia.',
   },
   {
     name: 'Aisha M.',
