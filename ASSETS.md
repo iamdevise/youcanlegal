@@ -70,3 +70,18 @@ rebuild and owns all brand assets; reuse is authorized by the client).
 
 Generated images: 0 (all imagery is owner-supplied — no AI generation needed).
 Fonts self-hosted under public/fonts/ (Plus Jakarta Sans var, Poppins 400/500/600/700, Playfair Display italic) — per frontend-implementation-policy (no Google CDN).
+
+## Image Manifest — round 2 additions
+
+| Path | Source | Usage | Status |
+|---|---|---|---|
+| /assets/images/logo-horiz-navy.svg | youcan.legal `2025/11/Logo-YOU-CAN-LEGAL-Horizont.svg` (owner asset, unmodified) | Header logo on light / scrolled backgrounds | ok |
+| /assets/images/logo-horiz-white.svg | same SVG with the navy wordmark `#001846` swapped to `#FFFFFF` (heart keeps its blue `#0069EB` / coral `#FF3F55`) | Header logo over the dark navy heroes | ok |
+| /assets/images/hero-portrait.png | youcan.legal `2025/11/man.png` (1024×1024) | Home hero portrait (replaces the old `hero-eu.jpg`, which was a video thumbnail carrying "Who We Are?" / "Watch now" ghost text) | ok |
+| /assets/flags/*.svg (247 files) | [flag-icons](https://www.npmjs.com/package/flag-icons) 4x3 set, copied into the repo so nothing is hotlinked | Country pickers (citizenship, residence, WhatsApp dial code) | ok |
+| /assets/flags/LICENSE.flag-icons.txt | flag-icons license (MIT) | Attribution for the bundled flags | ok |
+
+`hero-eu.jpg`, `hero-slovakia.jpg` and `hero-serbia.jpg` are no longer used by any
+hero: they were YouTube thumbnails with giant ghost headline text ("Who We Are?",
+"Slovakia", "SERBIA") that overlapped the page content. The page heroes now use the
+navy-to-blue theme gradient from `DESIGN.md`.
