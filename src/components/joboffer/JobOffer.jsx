@@ -1,0 +1,77 @@
+// Renders the structured job-offer blocks for a country (data-driven from joboffers.js).
+export default function JobOffer({ offer, embedded = false }) {
+  return (
+    <section className="job-offer" data-component="job-offer" style={embedded ? { padding: '10px 0 0' } : undefined}>
+      <div className="container" style={embedded ? { padding: 0 } : undefined}>
+        {offer.sections.map((sec) => (
+          <div key={sec.h} className="job-offer-grid" style={{ marginBottom: 40, ...(embedded ? { gridTemplateColumns: '1fr', gap: 20 } : null) }}>
+            <div className="job-offer-video" style={embedded ? { display: 'none' } : undefined}>
+              <div className="video-frame">
+                <iframe
+                  src={`https://www.youtube-nocookie.com/embed/${offer.videoId}`}
+                  title={offer.videoTitle}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  loading="lazy"
+                />
+              </div>
+            </div>
+            <div className="job-offer-content">
+              <h3>{sec.h}</h3>
+              {sec.blocks.map((b, i) => {
+                if (b.type === 'kv') {
+                  return (
+                    <p key={i}><strong>{b.label}:</strong> {b.text || ''}</p>
+                  );
+                }
+                if (b.type === 'kvlist') {
+                  return (
+                    <div key={i}>
+                      <p><strong>{b.label}:</strong></p>
+                      <ul>{b.items.map((it, j) => <li key={j}>{it}</li>)}</ul>
+                    </div>
+                  );
+                }
+                if (b.type === 'p') {
+                  return <p key={i} style={b.strong ? { fontWeight: 600, color: 'var(--color-ink-heading)' } : undefined}>{b.text}</p>;
+                }
+                if (b.type === 'h4') {
+                  return <h4 key={i}>{b.text}</h4>;
+                }
+                if (b.type === 'list') {
+                  return (
+                    <div key={i}>
+                      {b.title && <p><strong>{b.title}:</strong></p>}
+                      <ul>{b.items.map((it, j) => <li key={j}>{it}</li>)}</ul>
+                    </div>
+                  );
+                }
+                if (b.type === 'steps') {
+                  return (
+                    <ol key={i} className="steps">
+                      {b.items.map((it, j) => (
+                        <li key={j} style={{ marginBottom: 6 }}>{j + 1}. {it}</li>
+                      ))}
+                    </ol>
+                  );
+                }
+                if (b.type === 'cost') {
+                  return (
+                    <div className="cost-callout" key={i}>
+                      <strong>💰 {b.text}</strong>
+                      <span className="price">{b.price}</span>
+                    </div>
+                  );
+                }
+                return null;
+              })}
+              <div className="notice-inline">
+                <strong>Important:</strong> No sponsorship provided · All programs are paid
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}

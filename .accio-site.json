@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "siteId": "h3qdcbjhbkw3l07r",
+  "name": "youcanlegal",
+  "kind": "react-vite",
+  "devCommand": "vite",
+  "buildCommand": "vite build",
+  "outputDir": "dist",
+  "entry": "index.html",
+  "createdBy": "accio-site-builder",
+  "createdAt": "2026-10-05T09:56:10.392Z",
+  "siteIdSyncStatus": "synced",
+  "installedAt": "2026-10-05T10:03:29.571Z",
+  "databaseUrl": ""
+}
