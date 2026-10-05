@@ -14,6 +14,7 @@ export default function Hero() {
           <h1 className="hero-title">
             Study. Work. Live Abroad — <span className="accent-italic">Legally.</span>
           </h1>
+          {/* The original hero shows a single counter: 700+ Happy Clients. */}
           <div className="hero-stats">
             <div>
               <div className="hero-stat-value">700+</div>
@@ -21,14 +22,6 @@ export default function Hero() {
                 Happy
                 <br />
                 Clients
-              </div>
-            </div>
-            <div>
-              <div className="hero-stat-value">175+</div>
-              <div className="hero-stat-label">
-                Successful
-                <br />
-                Cases
               </div>
             </div>
           </div>

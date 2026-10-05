@@ -4,8 +4,10 @@ import Numbers from '../components/numbers/Numbers';
 import Testimonials from '../components/testimonials/Testimonials';
 import Team from '../components/team/Team';
 import SeoCopy from '../components/seocopy/SeoCopy';
+import Faq from '../components/faq/Faq';
 import { useApplyModal } from '../components/apply/ApplyModalHost';
 import { EU_OFFERS } from '../data/joboffers';
+import { COUNTRY_FAQ } from '../data/team';
 
 // /work-in-the-eu/ — hero, video + opportunity cards with modals, form, facts, social proof.
 // The hero uses a clean navy-to-blue theme gradient: no background photo and no
@@ -62,6 +64,7 @@ export default function WorkInEuPage() {
       <Numbers />
       <Testimonials />
       <Team />
+      <Faq items={COUNTRY_FAQ.eu} />
 
       <SeoCopy
         h1="Work in Europe — Job Placement with Full Support"

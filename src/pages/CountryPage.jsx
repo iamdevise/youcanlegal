@@ -40,6 +40,9 @@ export default function CountryPage({ countryKey }) {
             <button type="button" className="btn btn-primary" onClick={() => openApply(program)}>
               Apply Now
             </button>
+            <a href="#video" className="btn btn-outline-white">
+              Watch the video to see how it works
+            </a>
           </div>
           <div className="important-chips">
             <span className="chip">No sponsorship provided</span>
@@ -47,6 +50,22 @@ export default function CountryPage({ countryKey }) {
           </div>
         </div>
       </section>
+
+      {/* the original embeds the country video right after the hero */}
+      <div id="video" className="video-band">
+        <div className="container">
+          <div className="job-offer-video" style={{ maxWidth: 860, margin: '0 auto' }}>
+            <div className="video-frame">
+              <iframe
+                src={`https://www.youtube-nocookie.com/embed/${offer.videoId}`}
+                title={offer.videoTitle}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      </div>
 
       <JobOffer offer={offer} />
       <ApplyForm program={program} />

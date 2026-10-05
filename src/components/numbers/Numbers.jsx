@@ -10,7 +10,7 @@ export default function Numbers() {
         <div className="numbers-grid">
           <div className="number-card">
             <CountUp value={5} suffix="+" />
-            <p className="number-label">years of expirience in immigration matters</p>
+            <p className="number-label">years of experience in immigration matters</p>
           </div>
           <div className="number-card">
             <CountUp value={20} suffix="+" />
