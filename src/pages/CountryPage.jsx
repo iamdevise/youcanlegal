@@ -8,7 +8,7 @@ import Testimonials from '../components/testimonials/Testimonials';
 import Team from '../components/team/Team';
 import Faq from '../components/faq/Faq';
 import SeoCopy from '../components/seocopy/SeoCopy';
-import { COUNTRY_OFFERS } from '../../data/joboffers';
+import { COUNTRY_OFFERS } from '../data/joboffers';
 import { COUNTRY_FAQ } from '../data/team';
 
 // Shared template for /work-in-poland|slovakia|serbia/
