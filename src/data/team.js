@@ -1,16 +1,17 @@
 // Team members — 27, order matches the original site carousel.
 // Photos are owner-supplied brand assets downloaded into public/assets/images/team/.
 export const TEAM = [
-  { name: 'Yurii Asadchyi', role: 'CEO', photo: '/assets/images/team/01-yurii-asadchyi.jpg' },
+  // `linkedin` is only set for the members the original links (3 of 27).
+  { name: 'Yurii Asadchyi', role: 'CEO', photo: '/assets/images/team/01-yurii-asadchyi.jpg', linkedin: 'https://www.linkedin.com/in/yurii-asadchyi-b5b593404/' },
   { name: 'Oleh Shuba', role: 'Chief Marketing Officer', photo: '/assets/images/team/02-oleh-shuba.jpg' },
-  { name: 'Liudmila Kantsler', role: 'Senior Immigration Expert', photo: '/assets/images/team/03-liudmila-kantsler.jpg' },
+  { name: 'Liudmila Kantsler', role: 'Senior Immigration Expert', photo: '/assets/images/team/03-liudmila-kantsler.jpg', linkedin: 'https://www.linkedin.com/in/mila-k-546a0a178/' },
   { name: 'Tetiana Kodlubai', role: 'Senior Immigration Expert', photo: '/assets/images/team/04-tetiana-kodlubai.jpg' },
   { name: 'Alina Avramenko', role: 'Senior Immigration Expert', photo: '/assets/images/team/05-alina-avramenko.jpg' },
   { name: 'Oleh Ponomarenko', role: 'Senior Immigration Expert', photo: '/assets/images/team/06-oleh-ponomarenko.jpg' },
   { name: 'Alina Bashynska', role: 'Senior Immigration Expert', photo: '/assets/images/team/07-alina-bashynska.jpg' },
   { name: 'Yana Volkova', role: 'Senior Immigration Expert', photo: '/assets/images/team/08-yana-volkova.jpg' },
   { name: 'Julia Ivanchenko', role: 'Senior Immigration Expert', photo: '/assets/images/team/09-julia-ivanchenko.jpg' },
-  { name: 'Jack Zhuravel', role: 'Senior Immigration Expert', photo: '/assets/images/team/10-jack-zhuravel.jpg' },
+  { name: 'Jack Zhuravel', role: 'Senior Immigration Expert', photo: '/assets/images/team/10-jack-zhuravel.jpg', linkedin: 'https://www.linkedin.com/in/yevhenii-zhuravel-9b38173b5/' },
   { name: 'Oleksandra Hlushakova', role: 'Senior Immigration Expert', photo: '/assets/images/team/11-oleksandra-hlushakova.jpg' },
   { name: 'Yulia Pylypenko', role: 'Senior Immigration Expert', photo: '/assets/images/team/12-yulia-pylypenko.jpg' },
   { name: 'Nataliia Komendatenko', role: 'Senior Immigration Expert', photo: '/assets/images/team/13-nataliia-komendatenko.jpg' },
@@ -30,44 +31,9 @@ export const TEAM = [
   { name: 'Viktoria Poida', role: 'Senior Immigration Expert', photo: '/assets/images/team/27-viktoria-poida.jpg' },
 ];
 
-export const TESTIMONIALS = [
-  {
-    name: 'Daniel K.',
-    origin: 'Kenya — Warehouse Worker, Poland',
-    avatar: '/assets/images/testimonial-face-1.webp',
-    text: 'I had been scammed twice before, so I checked everything — the UK company number, the contract, everything. The process was exactly as they explained. Today I work officially in a warehouse in Poland with a real contract and my own bank account.',
-  },
-  {
-    name: 'Priya S.',
-    origin: 'India — Production Worker, Slovakia',
-    avatar: '/assets/images/testimonial-man.png',
-    text: 'The team guided me step by step — from the first video meeting to the embassy appointment. My documents arrived by DHL exactly as promised. I received my residence permit card and now live and work legally in Slovakia.',
-  },
-  {
-    name: 'Emmanuel O.',
-    origin: 'Nigeria — General Worker, Serbia',
-    avatar: '/assets/images/testimonial-face-1.webp',
-    text: 'Everything was transparent from day one — I always knew exactly which step we were on and what came next. The employer documents arrived complete and on time, and I started work legally in Serbia.',
-  },
-  {
-    name: 'Aisha M.',
-    origin: 'Pakistan — Packing Operator, Slovakia',
-    avatar: '/assets/images/testimonial-man.png',
-    text: 'They booked my embassy appointment, prepared the employment promise from the employer, and answered every WhatsApp message. I recommend them to anyone who wants to do things the legal way.',
-  },
-  {
-    name: 'Joseph M.',
-    origin: 'Ghana — Factory Worker, Poland',
-    avatar: '/assets/images/testimonial-face-1.webp',
-    text: 'Accommodation was arranged by the employer, the salary conditions matched the offer exactly, and I even got my first advance after the first working week. Honest people.',
-  },
-  {
-    name: 'Nguyen T.',
-    origin: 'Vietnam — Warehouse Operator, Poland',
-    avatar: '/assets/images/testimonial-man.png',
-    text: 'From documents to destination — that is exactly how it felt. Work permit, invitation letter, contract, accommodation confirmation: everything came as a full package.',
-  },
-];
+// NOTE: the invented written testimonials that used to live here are gone.
+// The real testimonials are the original's YouTube videos — see
+// src/data/testimonials.js and components/testimonials/Testimonials.jsx.
 
 export const HOME_FAQ = [
   {
@@ -122,7 +88,16 @@ export const HOME_FAQ = [
   },
 ];
 
+// FAQ blocks copied word for word from each original page (6 per page).
 export const COUNTRY_FAQ = {
+  eu: [
+    { q: '1. What does “Work in the EU” mean?', a: ['This program helps you find legal job opportunities in European countries and relocate with full support.', 'We guide you through the entire process — from job selection to starting work in Europe.'] },
+    { q: '2. What countries are included in this program?', a: ['We offer opportunities in different European countries, such as:', 'Poland', 'Slovakia', 'Serbia', 'Available countries may change depending on current employer demand.'] },
+    { q: '3. Are the jobs official and legal?', a: ['Yes, all jobs are official.', 'You receive a work permit, employment contract, and all required documents to work legally in the chosen country.'] },
+    { q: '4. What is included in your service?', a: ['We provide full support, including:', 'job matching with verified employers', 'document preparation', 'visa or residence permit guidance', 'step-by-step assistance until you start working'] },
+    { q: '5. Do I need experience or language skills?', a: ['Most positions are entry-level jobs, so:', 'experience is usually not required', 'language skills are not mandatory', 'However, basic communication skills can be an advantage.'] },
+    { q: '6. Will I receive support after arriving in Europe?', a: ['Yes. We continue supporting you even after arrival:', 'guidance on starting work', 'basic adaptation help', 'assistance with initial steps in the country'] },
+  ],
   poland: [
     { q: '1. What type of work will I do in Poland?', a: ['Most positions are entry-level jobs, such as:', 'warehouse work (packing, sorting, logistics)', 'production and factory work', 'general labor roles', 'These jobs usually do not require prior experience or language skills.'] },
     { q: '2. Is the job in Poland official and legal?', a: ['Yes, all employment is official.', 'You will receive a work contract and a legal work permit before starting your job.', 'We only cooperate with verified employers.'] },
@@ -145,6 +120,8 @@ export const COUNTRY_FAQ = {
     { q: '3. What documents will I receive?', a: ['You will receive official documents from the employer, including:', 'employment contract', 'invitation letter', 'accommodation confirmation', 'documents for Work Visa Type D and Residence Permit', 'These documents allow you to legally work and live in Serbia.'] },
     { q: '4. Is accommodation provided?', a: ['Yes, accommodation is provided:', 'shared apartments (2–4 people)', 'fully equipped housing', 'Cost: approximately €150 per month, deducted from salary.'] },
     { q: '5. What is included and what is not included?', a: ['Included:', 'transport to/from work', '1 meal per day', 'health insurance', 'tax registration', 'Not included:', 'flight tickets', 'personal expenses', 'document-related fees'] },
-    { q: '6. How does the application process work?', a: ['The process is step-by-step:', 'Sign service agreement', 'Make payment', 'Document preparation (up to ~10 days)', 'Receive employer documents', 'Submit application', 'Wait for visa decision (up to ~90 days)', 'Travel to Serbia and start work', 'After arrival, the employer assists with obtaining a residence permit for up to 3 years'] },
+    // "Make payment" was dropped from this list: it is payment content and the
+    // owner manages payment outside the site (round 2 rule).
+    { q: '6. How does the application process work?', a: ['The process is step-by-step:', 'Sign service agreement', 'Document preparation (up to ~10 days)', 'Receive employer documents', 'Submit application', 'Wait for visa decision (up to ~90 days)', 'Travel to Serbia and start work', 'After arrival, the employer assists with obtaining a residence permit for up to 3 years'] },
   ],
 };

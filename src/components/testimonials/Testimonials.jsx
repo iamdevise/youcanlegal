@@ -1,18 +1,46 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import SectionHeading from '../common/SectionHeading';
-import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
-import { TESTIMONIALS } from '../../data/team';
+import { TESTIMONIALS, embedUrl, posterUrl } from '../../data/testimonials';
 
-// Testimonials carousel — client stories (avatars are owner-supplied brand assets).
+// "proof of our work" / Testimonials — the original's carousel of YouTube video
+// testimonials (26 videos, same order). Each slide shows the real YouTube
+// thumbnail and a red play button; the iframe is only created on tap, so the
+// page stays fast with 26 videos. Videos use youtube-nocookie.com with autoplay,
+// exactly like the original. A playing video is stopped when the slide changes.
+
+// Desktop shows the original's 3 slides, phones show 1.
 function perView() {
   if (typeof window === 'undefined') return 3;
-  if (window.innerWidth <= 767) return 1;
-  if (window.innerWidth <= 1024) return 2;
-  return 3;
+  return window.innerWidth <= 767 ? 1 : 3;
+}
+
+function Slide({ video, isPlaying, onPlay }) {
+  return (
+    <figure className="video-slide">
+      {isPlaying ? (
+        <iframe
+          src={embedUrl(video.id)}
+          title={video.title}
+          frameBorder="0"
+          referrerPolicy="strict-origin-when-cross-origin"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      ) : (
+        <button type="button" className="yt-lite" onClick={onPlay} aria-label={`Play video: ${video.title}`}>
+          <img src={posterUrl(video.id)} alt={video.title} loading="lazy" />
+          <span className="yt-lite-play" aria-hidden="true" />
+        </button>
+      )}
+    </figure>
+  );
 }
 
 export default function Testimonials() {
-  const [page, setPage] = useState(0);
+  const trackRef = useRef(null);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [playingId, setPlayingId] = useState(null);
   const [per, setPer] = useState(perView);
 
   useEffect(() => {
@@ -21,40 +49,72 @@ export default function Testimonials() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  const maxPage = Math.max(0, Math.ceil(TESTIMONIALS.length / per) - 1);
-  const safePage = Math.min(page, maxPage);
-  const shift = safePage * (100 / per);
+  // Stop a playing video whenever the visible slide changes.
+  useEffect(() => {
+    setPlayingId(null);
+  }, [activeIdx]);
+
+  const stepSize = useCallback(() => {
+    const el = trackRef.current;
+    if (!el) return 0;
+    const first = el.querySelector('.video-slide');
+    if (!first) return 0;
+    const gap = parseFloat(getComputedStyle(el).columnGap || '0') || 0;
+    return first.getBoundingClientRect().width + gap;
+  }, []);
+
+  const handleScroll = () => {
+    const el = trackRef.current;
+    if (!el) return;
+    const step = stepSize();
+    if (!step) return;
+    const idx = Math.min(TESTIMONIALS.length - 1, Math.max(0, Math.round(el.scrollLeft / step)));
+    setActiveIdx((prev) => (prev === idx ? prev : idx));
+  };
+
+  const goTo = (index) => {
+    const el = trackRef.current;
+    if (!el) return;
+    const clamped = Math.min(TESTIMONIALS.length - 1, Math.max(0, index));
+    el.scrollTo({ left: clamped * stepSize(), behavior: 'smooth' });
+  };
 
   return (
     <section className="testimonials" id="testimonials" data-component="testimonials">
       <div className="container">
         <SectionHeading eyebrow="proof of our work" title="Testimonials" />
-        <div className="testi-viewport">
-          <div className="testi-track" style={{ transform: `translateX(-${shift}%)` }}>
-            {TESTIMONIALS.map((t) => (
-              <figure className="testi-card" key={t.name}>
-                <div className="testi-stars" aria-label="5 out of 5 stars">
-                  {Array.from({ length: 5 }).map((_, i) => <Star key={i} size={15} fill="currentColor" strokeWidth={0} />)}
-                </div>
-                <blockquote className="testi-text">{t.text}</blockquote>
-                <figcaption className="testi-author">
-                  <img src={t.avatar} alt={t.name} loading="lazy" />
-                  <div>
-                    <strong>{t.name}</strong>
-                    <span>{t.origin}</span>
-                  </div>
-                </figcaption>
-              </figure>
+
+        <div className="video-carousel">
+          <div className="video-track" ref={trackRef} onScroll={handleScroll}>
+            {TESTIMONIALS.map((video) => (
+              <Slide key={video.id} video={video} isPlaying={playingId === video.id} onPlay={() => setPlayingId(video.id)} />
             ))}
           </div>
+
+          <div className="carousel-nav video-arrows">
+            <button type="button" className="carousel-btn" aria-label="Previous testimonials" onClick={() => goTo(activeIdx - 1)}>
+              <ChevronLeft size={20} />
+            </button>
+            <button type="button" className="carousel-btn" aria-label="Next testimonials" onClick={() => goTo(activeIdx + 1)}>
+              <ChevronRight size={20} />
+            </button>
+          </div>
         </div>
-        <div className="carousel-nav">
-          <button type="button" className="carousel-btn" aria-label="Previous testimonials" disabled={safePage === 0} onClick={() => setPage(safePage - 1)}>
-            <ChevronLeft size={20} />
-          </button>
-          <button type="button" className="carousel-btn" aria-label="Next testimonials" disabled={safePage >= maxPage} onClick={() => setPage(safePage + 1)}>
-            <ChevronRight size={20} />
-          </button>
+
+        <div className="carousel-dots" role="tablist" aria-label="Testimonial pagination">
+          {TESTIMONIALS.map((video, i) => (
+            <button
+              key={video.id}
+              type="button"
+              role="tab"
+              aria-selected={i === activeIdx}
+              className={`carousel-dot${i === activeIdx ? ' is-active' : ''}`}
+              aria-label={`Go to testimonial ${i + 1} of ${TESTIMONIALS.length}${
+                i % per === 0 ? `: ${video.title}` : ''
+              }`}
+              onClick={() => goTo(i)}
+            />
+          ))}
         </div>
       </div>
     </section>
