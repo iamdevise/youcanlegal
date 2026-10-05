@@ -85,3 +85,22 @@ Fonts self-hosted under public/fonts/ (Plus Jakarta Sans var, Poppins 400/500/60
 hero: they were YouTube thumbnails with giant ghost headline text ("Who We Are?",
 "Slovakia", "SERBIA") that overlapped the page content. The page heroes now use the
 navy-to-blue theme gradient from `DESIGN.md`.
+
+## Image Manifest — round 3 additions (content fidelity)
+
+| Path | Source | Usage | Status |
+|---|---|---|---|
+| /assets/images/services/eu-work.jpg | youcan.legal `2025/11/work.jpg` | "Our services" — Work in the EU card | ok |
+| /assets/images/services/uk-study.jpg | youcan.legal `2025/11/study-1.jpg` | "Our services" — Study in the UK card | ok |
+| /assets/images/office-map.webp | youcan.legal `2025/07/map.webp` | Footer "Find us" — representative office map | ok |
+
+Removed in round 3 (they did not exist on the original, or were duplicated):
+
+- `testimonial-face-1.webp`, `testimonial-man.png` — avatars for the invented written
+  testimonials. The real testimonials are the original's 26 YouTube videos; their
+  thumbnails load from `i.ytimg.com` when the carousel renders, exactly as the
+  original does. No other image is hotlinked.
+- `footer-logo.png` — byte-identical duplicate of `logo.png`.
+
+All 27 team photos under `public/assets/images/team/` were re-downloaded from the
+original and are unchanged (same bytes as the committed files).
