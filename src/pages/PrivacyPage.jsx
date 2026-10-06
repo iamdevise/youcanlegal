@@ -1,13 +1,31 @@
+import { useSiteSettings } from '../lib/settings';
+
 // /privacy-policy/ — exact text from the original site (18 sections).
+//
+// The contact email is NOT hardcoded: it comes from site_settings.contact_email,
+// the same field the admin edits (Settings → "Contact email shown on the
+// website"). When it is empty the email part of each sentence is dropped rather
+// than replaced with a placeholder.
 const LAST_UPDATED = '30 April 2026';
 const CONTACT = {
   company: 'YOU CAN LEGAL SERVICES LTD',
   number: '16872568',
-  email: 'hello@youcan.legal',
   address: '167–169 Great Portland Street, London, England, W1W 5PF',
 };
 
 export default function PrivacyPage() {
+  const { contact_email: contactEmail } = useSiteSettings();
+  const emailAt = contactEmail ? (
+    <>
+      {' '}at <strong>{contactEmail}</strong>
+    </>
+  ) : null;
+  const emailInline = contactEmail ? (
+    <>
+      <strong> Email:</strong> {contactEmail} ·{' '}
+    </>
+  ) : null;
+
   return (
     <>
       <div className="container privacy-page" data-component="privacy-policy">
@@ -27,7 +45,8 @@ export default function PrivacyPage() {
           </p>
           <p>
             For privacy-related questions, requests, or complaints, you may contact us at:
-            <strong> Email:</strong> {CONTACT.email} · <strong>Company:</strong> {CONTACT.company} ·
+            {emailInline}
+            <strong>Company:</strong> {CONTACT.company} ·
             <strong> Company number:</strong> {CONTACT.number} ·
             <strong> Registered / contact address:</strong> {CONTACT.address}
           </p>
@@ -208,7 +227,7 @@ export default function PrivacyPage() {
             <li>improve our marketing campaigns.</li>
           </ul>
           <p>
-            You may opt out of marketing communications at any time by contacting us at <strong>{CONTACT.email}</strong> or by
+            You may opt out of marketing communications at any time by contacting us{emailAt} or by
             using any unsubscribe option provided in our messages.
           </p>
           <h3>5.7. For Legal, Security, and Compliance Purposes</h3>
@@ -366,7 +385,7 @@ export default function PrivacyPage() {
             <li>lodge a complaint with a data protection authority.</li>
           </ul>
           <p>
-            To exercise your rights, contact us at <strong>{CONTACT.email}</strong>. We may need to verify your identity before
+            To exercise your rights, contact us{emailAt}. We may need to verify your identity before
             responding to a request. Some rights may be limited where we have legal obligations, contractual obligations, fraud
             prevention needs, or legitimate grounds to retain certain information.
           </p>
@@ -375,7 +394,7 @@ export default function PrivacyPage() {
           <p>
             If you submit a form, contact us, or consent to communications, we may contact you by email, phone, WhatsApp,
             messenger, or other channels about your inquiry, application, services, and related offers. You can opt out of
-            marketing communications at any time by contacting <strong>{CONTACT.email}</strong> or using the unsubscribe option
+            marketing communications at any time by contacting{emailAt} or using the unsubscribe option
             where available.
           </p>
           <p>
@@ -388,7 +407,7 @@ export default function PrivacyPage() {
             Our services are intended for adults and persons who are legally able to enter into service agreements and
             work-related processes. We do not knowingly collect personal data from children under the age of 16 without
             appropriate parental or legal guardian consent, where such consent is required by law. If you believe a child
-            has provided us with personal data without proper consent, please contact us at <strong>{CONTACT.email}</strong>.
+            has provided us with personal data without proper consent, please contact us{emailAt}.
           </p>
 
           <h2>16. Third-Party Links</h2>
@@ -411,7 +430,12 @@ export default function PrivacyPage() {
           <p>
             <strong>{CONTACT.company}</strong><br />
             <strong>Company number:</strong> {CONTACT.number}<br />
-            <strong>Email:</strong> {CONTACT.email}<br />
+            {contactEmail && (
+              <>
+                <strong>Email:</strong> {contactEmail}
+                <br />
+              </>
+            )}
             <strong>Address:</strong> {CONTACT.address}
           </p>
         </article>

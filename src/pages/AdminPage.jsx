@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Download, LogOut, RefreshCw, Search, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Plus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { ADMIN_EMAIL, SETTINGS_DEFAULTS, SETTINGS_FIELDS, fetchSiteSettings, invalidateSiteSettings } from '../lib/settings';
+import {
+  CHAT_TYPE_LABELS,
+  contactDisplayValue,
+  invalidateChatContacts,
+  normalizeContactValue,
+} from '../lib/chatContacts';
 
 // /admin — Supabase Auth protected. Only ADMIN_EMAIL can read/write anything;
 // the same rule is enforced in the database by RLS, so hiding the route is
@@ -16,9 +23,12 @@ const STATUSES = [
 
 const TABS = [
   { id: 'applications', label: 'Applications' },
+  { id: 'chat', label: 'Chat contacts' },
   { id: 'settings', label: 'Settings' },
   { id: 'activity', label: 'Activity log' },
 ];
+
+const EMPTY_CONTACT = { type: 'whatsapp', label: '', value: '' };
 
 function fmt(dateString) {
   if (!dateString) return '';
@@ -42,6 +52,8 @@ export default function AdminPage() {
   const [applications, setApplications] = useState([]);
   const [activity, setActivity] = useState([]);
   const [settings, setSettings] = useState({ ...SETTINGS_DEFAULTS });
+  const [contacts, setContacts] = useState([]);
+  const [contactDraft, setContactDraft] = useState(EMPTY_CONTACT);
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
@@ -94,13 +106,16 @@ export default function AdminPage() {
     setLoading(true);
     setError('');
     try {
-      const [appsRes, activityRes] = await Promise.all([
+      const [appsRes, activityRes, contactsRes] = await Promise.all([
         db.from('applications').select('*').order('created_at', { ascending: false }),
         db.from('admin_activity').select('*').order('created_at', { ascending: false }).limit(200),
+        // The admin policy also exposes disabled rows, so the panel can list them.
+        db.from('chat_contacts').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
       ]);
       if (appsRes.error) throw appsRes.error;
       setApplications(appsRes.data || []);
       setActivity(activityRes.data || []);
+      setContacts(contactsRes.error ? [] : contactsRes.data || []);
       const fresh = await fetchSiteSettings(true);
       setSettings(fresh);
     } catch (err) {
@@ -251,6 +266,87 @@ export default function AdminPage() {
     invalidateSiteSettings();
     setNotice('Settings saved. The public site will show them on the next page load.');
     await logActivity('settings_update', { keys: SETTINGS_FIELDS.map((f) => f.key) });
+  };
+
+  // --------------------------------------------------------- chat contacts ---
+  // Any number of WhatsApp numbers and Telegram links. Each change is recorded
+  // in admin_activity. Values are normalised before they are stored:
+  //   WhatsApp  →  https://wa.me/<digits>
+  //   Telegram  →  https://t.me/<username>
+  const addContact = async (event) => {
+    event.preventDefault();
+    if (!db) return;
+    const value = normalizeContactValue(contactDraft.type, contactDraft.value);
+    if (!value) {
+      setNotice(
+        contactDraft.type === 'whatsapp'
+          ? 'That does not look like a phone number. Use a number with country code, e.g. +254 700 000 000, or a wa.me link.'
+          : 'That does not look like a Telegram link. Use a t.me link or an @username.'
+      );
+      return;
+    }
+    const nextOrder = contacts.length ? Math.max(...contacts.map((c) => c.sort_order || 0)) + 1 : 0;
+    const { data, error: insertError } = await db
+      .from('chat_contacts')
+      .insert({
+        type: contactDraft.type,
+        label: contactDraft.label.trim() || CHAT_TYPE_LABELS[contactDraft.type],
+        value,
+        sort_order: nextOrder,
+        active: true,
+      })
+      .select()
+      .single();
+    if (insertError) {
+      setNotice(`Could not add the contact: ${insertError.message}`);
+      return;
+    }
+    setContacts((list) => [...list, data]);
+    setContactDraft(EMPTY_CONTACT);
+    invalidateChatContacts();
+    setNotice(`Added ${CHAT_TYPE_LABELS[data.type]} contact.`);
+    await logActivity('chat_contact_add', { type: data.type, value });
+  };
+
+  const patchContact = async (id, patch, action, details) => {
+    if (!db) return;
+    const { error: updateError } = await db.from('chat_contacts').update(patch).eq('id', id);
+    if (updateError) {
+      setNotice(`Could not update the contact: ${updateError.message}`);
+      return;
+    }
+    setContacts((list) => list.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+    invalidateChatContacts();
+    if (action) await logActivity(action, details || patch);
+  };
+
+  const deleteContact = async (contact) => {
+    if (!db) return;
+    if (!window.confirm(`Delete the ${CHAT_TYPE_LABELS[contact.type]} contact ${contactDisplayValue(contact.type, contact.value)}?`)) return;
+    const { error: deleteError } = await db.from('chat_contacts').delete().eq('id', contact.id);
+    if (deleteError) {
+      setNotice(`Could not delete the contact: ${deleteError.message}`);
+      return;
+    }
+    setContacts((list) => list.filter((c) => c.id !== contact.id));
+    invalidateChatContacts();
+    setNotice('Contact deleted.');
+    await logActivity('chat_contact_delete', { type: contact.type, value: contact.value });
+  };
+
+  /** Move a contact up or down by swapping sort_order with its neighbour. */
+  const moveContact = async (contact, direction) => {
+    const sameType = contacts.filter((c) => c.type === contact.type);
+    const index = sameType.findIndex((c) => c.id === contact.id);
+    const swapWith = sameType[index + direction];
+    if (!swapWith) return;
+    await patchContact(contact.id, { sort_order: swapWith.sort_order }, 'chat_contact_reorder', {
+      type: contact.type,
+      moved: contact.value,
+      past: swapWith.value,
+    });
+    await patchContact(swapWith.id, { sort_order: contact.sort_order });
+    await loadAll();
   };
 
   // ----------------------------------------------------------------- views ---
@@ -422,6 +518,120 @@ export default function AdminPage() {
                 </button>
               ))}
             </div>
+          </section>
+        )}
+
+        {tab === 'chat' && (
+          <section className="admin-card">
+            <h2 className="admin-h2">Chat contacts</h2>
+            <p className="admin-muted">
+              Every WhatsApp number and Telegram link you add here feeds the floating chat button and the forms&apos; chat links. Disabled contacts stay
+              hidden from the site. When a visitor taps chat, one active contact of that type is chosen at random and kept for their session.
+            </p>
+
+            <form className="admin-form-grid admin-form-grid--contact" onSubmit={addContact}>
+              <label className="admin-field">
+                <span>Type</span>
+                <select
+                  value={contactDraft.type}
+                  onChange={(e) => setContactDraft((d) => ({ ...d, type: e.target.value }))}
+                >
+                  <option value="whatsapp">WhatsApp</option>
+                  <option value="telegram">Telegram</option>
+                </select>
+              </label>
+              <label className="admin-field">
+                <span>Label (optional)</span>
+                <input
+                  type="text"
+                  value={contactDraft.label}
+                  placeholder={contactDraft.type === 'whatsapp' ? 'English support' : 'Telegram support'}
+                  onChange={(e) => setContactDraft((d) => ({ ...d, label: e.target.value }))}
+                />
+              </label>
+              <label className="admin-field admin-field--wide">
+                <span>{contactDraft.type === 'whatsapp' ? 'Number or wa.me link' : 't.me link or @username'}</span>
+                <input
+                  type="text"
+                  value={contactDraft.value}
+                  placeholder={contactDraft.type === 'whatsapp' ? '+254 700 000 000' : '@youcanlegal'}
+                  onChange={(e) => setContactDraft((d) => ({ ...d, value: e.target.value }))}
+                />
+              </label>
+              <div className="admin-actions">
+                <button type="submit" className="btn-apply btn-apply--compact">
+                  <Plus size={18} aria-hidden="true" /> Add contact
+                </button>
+              </div>
+            </form>
+
+            {contacts.length === 0 ? (
+              <p className="admin-empty">No chat contacts yet. Add your first WhatsApp number or Telegram link above.</p>
+            ) : (
+              ['whatsapp', 'telegram'].map((type) => {
+                const group = contacts.filter((c) => c.type === type);
+                if (group.length === 0) return null;
+                return (
+                  <div className="admin-contact-group" key={type}>
+                    <h3 className="admin-h3">{CHAT_TYPE_LABELS[type]}</h3>
+                    <div className="admin-list">
+                      {group.map((c, i) => (
+                        <div className={`admin-contact-row${c.active ? '' : ' is-off'}`} key={c.id}>
+                          <span className="admin-contact-main">
+                            <strong>{c.label || CHAT_TYPE_LABELS[type]}</strong>
+                            <span className="admin-row-sub">{contactDisplayValue(c.type, c.value)}</span>
+                          </span>
+                          <span className={`admin-status ${c.active ? 'admin-status--approved' : 'admin-status--rejected'}`}>
+                            {c.active ? 'active' : 'disabled'}
+                          </span>
+                          <span className="admin-contact-tools">
+                            <button
+                              type="button"
+                              className="admin-ghost-btn"
+                              aria-label="Move up"
+                              disabled={i === 0}
+                              onClick={() => moveContact(c, -1)}
+                            >
+                              <ArrowUp size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              className="admin-ghost-btn"
+                              aria-label="Move down"
+                              disabled={i === group.length - 1}
+                              onClick={() => moveContact(c, 1)}
+                            >
+                              <ArrowDown size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              className="admin-ghost-btn"
+                              onClick={() =>
+                                patchContact(c.id, { active: !c.active }, 'chat_contact_toggle', {
+                                  type: c.type,
+                                  value: c.value,
+                                  active: !c.active,
+                                })
+                              }
+                            >
+                              {c.active ? 'Disable' : 'Enable'}
+                            </button>
+                            <button
+                              type="button"
+                              className="admin-ghost-btn admin-ghost-btn--danger"
+                              aria-label="Delete contact"
+                              onClick={() => deleteContact(c)}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </section>
         )}
 

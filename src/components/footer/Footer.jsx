@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
-import { Facebook, Youtube, Instagram, Linkedin, Mail, Phone, Send } from 'lucide-react';
-import { TikTokIcon, WhatsAppIcon } from '../common/icons';
-import { useSiteSettings, whatsappHref } from '../../lib/settings';
+import { Facebook, Youtube, Instagram, Linkedin, Mail, Phone } from 'lucide-react';
+import { TikTokIcon } from '../common/icons';
+import { useSiteSettings } from '../../lib/settings';
+import { availableTypes, useChatContacts } from '../../lib/chatContacts';
+import ChatLink from '../chat/ChatLink';
 
 // Site footer — the same four columns and wording as the original youcan.legal
 // footer: "Find us / Representative office", the logo with "Immigration Support"
@@ -15,6 +17,10 @@ import { useSiteSettings, whatsappHref } from '../../lib/settings';
 
 export default function Footer() {
   const settings = useSiteSettings();
+  const chatContacts = useChatContacts();
+  // Telegram / WhatsApp come from the admin's chat contact list, not from a
+  // single settings value, so every chat link on the site follows the same list.
+  const chatTypes = availableTypes(chatContacts);
 
   // The original footer's order: Facebook, Youtube, Instagram, Linkedin, Tiktok.
   const socials = [
@@ -23,8 +29,6 @@ export default function Footer() {
     { key: 'instagram', href: settings.instagram_url, label: 'Instagram', icon: <Instagram size={18} /> },
     { key: 'linkedin', href: settings.linkedin_url, label: 'Linkedin', icon: <Linkedin size={18} /> },
     { key: 'tiktok', href: settings.tiktok_url, label: 'Tiktok', icon: <TikTokIcon size={18} /> },
-    { key: 'telegram', href: settings.telegram_url, label: 'Telegram', icon: <Send size={18} /> },
-    { key: 'whatsapp', href: whatsappHref(settings), label: 'WhatsApp', icon: <WhatsAppIcon size={18} /> },
   ].filter((s) => s.href);
 
   return (
@@ -53,12 +57,15 @@ export default function Footer() {
           <div className="footer-col">
             <img className="footer-logo" src="/assets/images/logo.png" alt="You Can Legal" />
             <h3>Immigration Support</h3>
-            {socials.length > 0 && (
+            {(socials.length > 0 || chatTypes.length > 0) && (
               <div className="social-row">
                 {socials.map((s) => (
                   <a key={s.key} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label}>
                     {s.icon}
                   </a>
+                ))}
+                {chatTypes.map((type) => (
+                  <ChatLink key={type} type={type} />
                 ))}
               </div>
             )}
@@ -102,17 +109,19 @@ export default function Footer() {
               (This serves solely as a registered address; for in-office meetings, please use our representative office in Poland.)
             </p>
 
-            <h3 style={{ marginTop: '22px' }}>Partnerships</h3>
-            <p>
-              For all partnership and collaboration inquiries, please contact us at{' '}
-              {settings.contact_email ? (
-                <a href={`mailto:${settings.contact_email}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                  <Mail size={14} /> {settings.contact_email}
-                </a>
-              ) : (
-                <span>our contact email</span>
-              )}
-            </p>
+            {/* The whole sentence is hidden when no contact email is set — never a
+                placeholder. The address comes from site_settings.contact_email. */}
+            {settings.contact_email && (
+              <>
+                <h3 style={{ marginTop: '22px' }}>Partnerships</h3>
+                <p>
+                  For all partnership and collaboration inquiries, please contact us at{' '}
+                  <a href={`mailto:${settings.contact_email}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                    <Mail size={14} /> {settings.contact_email}
+                  </a>
+                </p>
+              </>
+            )}
           </div>
         </div>
 

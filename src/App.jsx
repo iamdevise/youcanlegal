@@ -12,38 +12,43 @@ import BlogPostPage from './pages/BlogPostPage';
 import NotFoundPage from './pages/NotFoundPage';
 import AdminPage from './pages/AdminPage';
 import { ApplyModalProvider } from './components/apply/ApplyModalHost';
-import { WhatsAppIcon } from './components/common/icons';
-import { Send } from 'lucide-react';
-import { useSiteSettings, whatsappHref } from './lib/settings';
+import ChatFloat from './components/chat/ChatFloat';
 
+// Scroll handling on navigation.
+//
+// No hash → jump to the top, as before. With a hash (for example
+// /work-in-the-eu/#opportunities) → scroll smoothly to that element. The target
+// section may not exist yet on the first paint, so it retries briefly. Depending
+// on location.key as well as the path means it also works when the visitor is
+// already on that page and clicks the same link again.
 function ScrollToTop() {
-  const { pathname } = useLocation();
+  const location = useLocation();
+
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    const id = location.hash ? location.hash.slice(1) : '';
+    if (!id) {
+      window.scrollTo(0, 0);
+      return undefined;
+    }
+
+    let tries = 0;
+    let timer;
+    const tryScroll = () => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+      if (tries < 25) {
+        tries += 1;
+        timer = window.setTimeout(tryScroll, 60);
+      }
+    };
+    tryScroll();
+    return () => window.clearTimeout(timer);
+  }, [location.key, location.pathname, location.hash]);
+
   return null;
-}
-
-// Floating chat button — reads the WhatsApp link from site settings and falls
-// back to Telegram only when WhatsApp is not set. Hidden when both are empty.
-function ChatFloat() {
-  const settings = useSiteSettings();
-  const whatsapp = whatsappHref(settings);
-  const href = whatsapp || settings.telegram_url;
-  if (!href) return null;
-
-  const isWhatsApp = Boolean(whatsapp);
-  return (
-    <a
-      className={`wa-float${isWhatsApp ? '' : ' wa-float--telegram'}`}
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={isWhatsApp ? 'Chat with us on WhatsApp' : 'Chat with us on Telegram'}
-    >
-      {isWhatsApp ? <WhatsAppIcon size={28} /> : <Send size={26} />}
-    </a>
-  );
 }
 
 function PublicLayout() {

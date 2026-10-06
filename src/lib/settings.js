@@ -24,17 +24,24 @@ export const SETTINGS_DEFAULTS = {
   notification_email: 'polystaradmin@gmail.com',
 };
 
-// Field metadata drives both the public site and the admin form.
+// Field metadata drives the admin Settings form. Telegram / WhatsApp live in the
+// Chat contacts section instead (see lib/chatContacts.js).
 export const SETTINGS_FIELDS = [
-  { key: 'telegram_url', label: 'Telegram link', placeholder: 'https://t.me/youcanlegal', type: 'url' },
-  { key: 'whatsapp_url', label: 'WhatsApp link', placeholder: 'https://wa.me/254700000000', type: 'url' },
-  { key: 'whatsapp_number', label: 'WhatsApp number (used if the link is empty)', placeholder: '+254 700 000 000', type: 'text' },
+  // Telegram and WhatsApp are no longer single values here — they are managed as
+  // a list in the admin's "Chat contacts" section (table `chat_contacts`).
   { key: 'instagram_url', label: 'Instagram', placeholder: 'https://instagram.com/…', type: 'url' },
   { key: 'facebook_url', label: 'Facebook', placeholder: 'https://facebook.com/…', type: 'url' },
   { key: 'tiktok_url', label: 'TikTok', placeholder: 'https://tiktok.com/@…', type: 'url' },
   { key: 'youtube_url', label: 'YouTube', placeholder: 'https://youtube.com/@…', type: 'url' },
   { key: 'linkedin_url', label: 'LinkedIn', placeholder: 'https://linkedin.com/company/…', type: 'url' },
-  { key: 'contact_email', label: 'Public contact email', placeholder: 'hello@youcan.legal', type: 'email' },
+  // Clear about which email is which — one is shown on the site, the other
+  // only receives the application notifications.
+  {
+    key: 'contact_email',
+    label: "Contact email shown on the website (used in 'please contact us at')",
+    placeholder: 'hello@youcan.legal',
+    type: 'email',
+  },
   { key: 'contact_phone', label: 'Public contact phone', placeholder: '+48 000 000 000', type: 'text' },
   { key: 'notification_email', label: 'Send applications to (notification email)', placeholder: 'polystaradmin@gmail.com', type: 'email' },
 ];
@@ -101,14 +108,6 @@ export function useSiteSettings() {
   return settings;
 }
 
-/** Build a wa.me link from a stored number or link. */
-export function whatsappHref(settings) {
-  if (settings.whatsapp_url) return settings.whatsapp_url;
-  const digits = String(settings.whatsapp_number || '').replace(/[^\d]/g, '');
-  return digits ? `https://wa.me/${digits}` : '';
-}
-
-/** Best available chat target for the floating button: WhatsApp first, then Telegram. */
-export function chatHref(settings) {
-  return whatsappHref(settings) || settings.telegram_url || '';
-}
+// NOTE: the old whatsappHref()/chatHref() helpers are gone. WhatsApp and
+// Telegram now come from the `chat_contacts` list via lib/chatContacts.js, which
+// also handles picking one contact per visitor.
