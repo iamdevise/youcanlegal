@@ -544,45 +544,110 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   color: var(--color-on-dark);
   box-shadow: 0 30px 70px rgba(3,23,67,0.35);
 }
-.apply-form .form-head { font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; color: var(--color-on-dark); margin-bottom: 6px; }
-.apply-form .form-note { font-size: 0.8125rem; color: rgba(255,255,255,0.72); margin-bottom: 22px; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.form-field { margin-bottom: 16px; }
-.form-field label { display: block; font-size: 0.875rem; font-weight: 600; color: var(--color-on-dark); margin-bottom: 7px; }
-.form-field label .req { color: #FFC2C9; }
 
-.radio-row { display: flex; gap: 10px; align-items: center; font-weight: 400; min-height: 48px; color: rgba(255,255,255,0.94); }
-.radio-row input[type="radio"] { width: 20px; height: 20px; accent-color: #fff; flex-shrink: 0; }
-.phone-row { display: flex; gap: 10px; align-items: flex-start; }
-.phone-row .combo { flex: 0 0 124px; }
-.phone-row > input { flex: 1 1 auto; }
+/* ---------------------------------------------------------------------------
+   The 3-step application form (shared by the popup and the inline form).
+   Everything is sized so a single step fits a 360x640 phone with no scrolling:
+   44px controls, 16px text (stops iOS zooming in), tight gaps.
+   --------------------------------------------------------------------------- */
+.apply-form--modal { display: flex; flex-direction: column; min-height: 0; }
+.af-head { flex: 0 0 auto; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.16); }
+.af-title { font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; line-height: 1.25; color: var(--color-on-dark); padding-right: 46px; }
+.af-progress { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.af-progress-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.02em; color: rgba(255,255,255,0.82); white-space: nowrap; }
+.af-progress-track { flex: 1 1 auto; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.24); overflow: hidden; }
+.af-progress-fill { display: block; height: 100%; border-radius: 2px; background: #fff; transition: width 0.3s var(--ease-out); }
 
-/* underline-only fields, transparent over the gradient */
-.form-field input[type="text"],
-.form-field input[type="email"],
-.form-field input[type="tel"],
-.form-field input[type="number"] {
-  width: 100%; min-height: 48px; padding: 10px 2px;
-  border: none; border-bottom: 1px solid rgba(255,255,255,0.7);
+.af-body { flex: 1 1 auto; min-height: 0; padding: 12px 0 0; }
+.apply-form--modal .af-body { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+.af-field { margin-bottom: 10px; }
+.af-field:last-child { margin-bottom: 0; }
+.af-field label { display: block; font-size: 0.8125rem; font-weight: 600; line-height: 1.3; color: rgba(255,255,255,0.94); margin-bottom: 4px; }
+.af-field label .req { color: #FFC2C9; }
+.af-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.af-field input[type="text"],
+.af-field input[type="email"],
+.af-field input[type="tel"],
+.af-field input[type="number"] {
+  width: 100%; height: 44px; min-height: 44px; padding: 9px 2px;
+  font-size: 16px; border: none; border-bottom: 1px solid rgba(255,255,255,0.7);
   border-radius: 0; background: transparent; color: var(--color-on-dark);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
-.form-field input::placeholder { color: var(--color-on-dark-placeholder); }
-.form-field input:focus { outline: none; border-bottom-color: #fff; box-shadow: 0 2px 0 0 rgba(255,255,255,0.85); }
+.af-field input::placeholder { color: var(--color-on-dark-placeholder); }
+.af-field input:focus { outline: none; border-bottom-color: #fff; box-shadow: 0 2px 0 0 rgba(255,255,255,0.85); }
+
+/* compact Yes / No toggle — no big radio circles */
+.af-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.af-toggle-btn {
+  height: 40px; border-radius: 10px; font-family: var(--font-display); font-weight: 700; font-size: 0.9375rem;
+  color: rgba(255,255,255,0.92); background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.45);
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.af-toggle-btn.is-active { background: #fff; color: var(--color-navy-deep); border-color: #fff; }
+
+.af-phone-row { display: flex; gap: 8px; align-items: flex-start; }
+.af-phone-row > *:first-child { flex: 0 0 118px; }
+.af-phone-row > input { flex: 1 1 auto; min-width: 0; }
+
+/* step 3 — small, tight consent text (wording unchanged) */
+.af-consent { display: flex; gap: 9px; align-items: flex-start; margin-bottom: 9px; }
+.af-consent input[type="checkbox"] { width: 19px; height: 19px; margin-top: 1px; accent-color: #fff; flex-shrink: 0; }
+.af-consent label { font-size: 13px; line-height: 1.35; color: rgba(255,255,255,0.92); }
+.af-privacy-link { color: #fff; text-decoration: underline; font-weight: 600; }
+.af-privacy-link:hover { color: var(--color-accent-ice); }
+.af-footnote { margin-top: 10px; font-size: 0.72rem; color: rgba(255,255,255,0.7); text-align: center; }
+
+.af-alert {
+  border-radius: var(--radius-xs); padding: 9px 11px; font-size: 0.8125rem; line-height: 1.35; margin-bottom: 10px;
+  background: rgba(255,63,85,0.22); color: #FFE3E6; border: 1px solid rgba(255,63,85,0.6);
+}
+
+/* the buttons row — pinned to the bottom of the popup card */
+.af-foot { flex: 0 0 auto; display: flex; gap: 10px; padding-top: 12px; margin-top: 2px; }
+.af-foot .btn-af-secondary { flex: 0 0 auto; }
+.af-foot .btn-apply { flex: 1 1 auto; }
+
+.btn-af-secondary {
+  height: 52px; padding: 0 20px; border-radius: 12px; font-family: var(--font-display); font-weight: 700; font-size: 0.95rem;
+  color: #fff; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.5);
+  transition: background 0.2s;
+}
+.btn-af-secondary:hover { background: rgba(255,255,255,0.24); }
+
+/* success state — also fits without scrolling */
+.af-success { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 18px 4px 6px; }
+.af-success-icon {
+  width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.18); border: 2px solid rgba(255,255,255,0.75); color: #fff;
+}
+.af-success strong { font-family: var(--font-display); font-size: 1.05rem; color: #fff; }
+.af-success p { font-size: 0.875rem; line-height: 1.4; color: rgba(255,255,255,0.86); }
+.af-success .btn-af-secondary { margin-top: 6px; }
+
+/* ---------------------------------------------------- high-visibility apply button
+   White with navy text: ~15:1 against this gradient card and ~4.6:1 against the
+   brand blue, so it is always obvious. */
+.btn-apply {
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  min-height: 52px; width: 100%; padding: 0 22px;
+  border: none; border-radius: 12px; cursor: pointer;
+  font-family: var(--font-display); font-weight: 800; font-size: 1.0625rem; letter-spacing: 0.01em;
+  color: var(--color-navy-deep); background: #fff;
+  box-shadow: 0 10px 24px rgba(3,23,67,0.32), 0 2px 0 rgba(255,255,255,0.5) inset;
+  transition: transform 0.15s var(--ease-out), box-shadow 0.2s, background 0.2s;
+}
+.btn-apply:hover { background: #F1F7FF; transform: translateY(-1px); box-shadow: 0 14px 30px rgba(3,23,67,0.38); }
+.btn-apply:active { transform: translateY(1px) scale(0.995); box-shadow: 0 6px 14px rgba(3,23,67,0.3); }
+.btn-apply:focus-visible { outline: 3px solid var(--color-accent-ice); outline-offset: 2px; }
+.btn-apply:disabled { background: rgba(255,255,255,0.6); color: rgba(3,23,67,0.6); box-shadow: none; cursor: not-allowed; transform: none; }
+.btn-apply--compact { width: auto; min-height: 44px; font-size: 0.95rem; padding: 0 18px; }
+.af-spin { animation: af-spin 0.9s linear infinite; }
+@keyframes af-spin { to { transform: rotate(360deg); } }
+
 .hp-field { position: absolute !important; left: -9999px !important; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-
-.check-field { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 13px; font-size: 0.855rem; line-height: 1.5; }
-.check-field input[type="checkbox"] { width: 20px; height: 20px; margin-top: 2px; accent-color: #fff; flex-shrink: 0; }
-.check-field label { color: rgba(255,255,255,0.9); }
-.form-privacy-link { color: #fff; text-decoration: underline; }
-.form-privacy-link:hover { color: var(--color-accent-ice); }
-
-.form-alert { border-radius: var(--radius-xs); padding: 14px 16px; font-size: 0.9rem; margin-bottom: 16px; }
-.form-alert.error { background: rgba(255,63,85,0.22); color: #FFE3E6; border: 1px solid rgba(255,63,85,0.6); }
-.form-alert.success { background: rgba(255,255,255,0.16); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.45); }
-.form-submit { width: 100%; margin-top: 8px; }
-.form-submit:disabled { opacity: 0.6; cursor: wait; }
-.form-footnote { margin-top: 14px; font-size: 0.78rem; color: rgba(255,255,255,0.7); text-align: center; }
 
 /* ---------- custom searchable combobox + themed select ---------- */
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
@@ -616,7 +681,7 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
 .combo-search input { flex: 1 1 auto; background: transparent; border: none; color: #fff; font-size: 1rem; min-height: 34px; padding: 0; }
 .combo-search input::placeholder { color: rgba(255,255,255,0.55); }
 .combo-search input:focus { outline: none; }
-.combo-list, .combo-panel--list { list-style: none; margin: 0; padding: 4px 0; max-height: min(46vh, 320px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.combo-list, .combo-panel--list { list-style: none; margin: 0; padding: 4px 0; max-height: min(38dvh, 250px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .combo-option { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 10px 14px; cursor: pointer; color: #fff; font-size: 0.95rem; }
 .combo-option.is-active { background: rgba(0,103,227,0.85); }
 .combo-option.is-selected { font-weight: 600; }
@@ -628,12 +693,23 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
 
 /* ---------- Apply Now modal ---------- */
 .apply-modal-overlay { z-index: 2100; }
-.apply-modal-card { position: relative; width: 100%; max-width: 640px; max-height: 90vh; display: flex; flex-direction: column; animation: pop-in 0.3s var(--ease-out); }
-.apply-modal-card .apply-card { border-radius: var(--radius-lg); padding: 30px 26px 36px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-.apply-modal-card .form-head { padding-right: 54px; }
+/* The popup: one step per screen. 100dvh accounts for the mobile browser bars,
+   so a step fits 360x640 with room to spare. */
+.apply-modal-overlay { padding: 10px; }
+.apply-modal-card {
+  position: relative; width: 100%; max-width: 640px;
+  max-height: calc(100dvh - 20px);
+  display: flex; flex-direction: column;
+  animation: pop-in 0.3s var(--ease-out);
+}
+.apply-modal-card .apply-form {
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+  box-shadow: 0 30px 70px rgba(3,23,67,0.45);
+}
 .apply-modal-close {
-  position: absolute; top: 12px; right: 14px; z-index: 5;
-  width: 44px; height: 44px; border-radius: 50%;
+  position: absolute; top: 8px; right: 8px; z-index: 5;
+  width: 34px; height: 34px; border-radius: 50%;
   border: 1px solid rgba(255,255,255,0.45); background: rgba(255,255,255,0.16); color: #fff;
   display: flex; align-items: center; justify-content: center;
 }
@@ -811,10 +887,16 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   .service-card { min-height: 380px; }
   .service-title { font-size: 3rem; }
   .numbers-grid { grid-template-columns: 1fr; gap: 16px; }
-  .form-row { grid-template-columns: 1fr; }
   .apply-form { padding: 26px 20px; }
-  .apply-modal-card { max-height: 92vh; }
-  .apply-modal-card .apply-card { padding: 26px 18px 30px; }
+  .apply-modal-card { max-height: calc(100dvh - 20px); }
+  .apply-modal-card .apply-form { padding: 14px 16px; }
+  .af-foot .btn-af-secondary { padding: 0 14px; }
+  .job-offer-sticky { margin: 6px -20px -30px; padding: 10px 20px 14px; }
+  #opportunities { scroll-margin-top: 96px; }
+  /* phone: the chooser becomes a bottom sheet */
+  .chat-float-wrap { right: 14px; bottom: 14px; }
+  .chat-chooser { position: fixed; left: 10px; right: 10px; bottom: 10px; width: auto; }
+  .admin-form-grid--contact { grid-template-columns: 1fr; }
   .footer-grid { grid-template-columns: 1fr; gap: 34px; }
   .page-hero-inner { padding: 72px 16px 84px; }
   .blog-grid { grid-template-columns: 1fr; }
@@ -958,3 +1040,67 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   .admin-row { flex-wrap: wrap; }
   .admin-row-date { width: 100%; }
 }
+
+/* ---------- "Available Opportunities" anchor ----------
+   Every "Work in the EU" link targets #opportunities, so the cards sit clear of
+   the sticky header instead of under it. */
+#opportunities { scroll-margin-top: 132px; }
+
+/* ---------- Apply buttons at the end of the job offers ---------- */
+.job-offer-apply { margin-top: 22px; }
+/* Sticky bar inside the Read More popup: always visible without scrolling. */
+.job-offer-sticky {
+  position: sticky; bottom: 0; z-index: 4;
+  margin: 6px -34px -44px; padding: 12px 34px 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,0) 0%, #fff 36%);
+}
+
+/* ---------- floating chat button + chooser ---------- */
+.chat-float-wrap { position: fixed; right: 22px; bottom: 22px; z-index: 1500; }
+.chat-float {
+  width: 58px; height: 58px; border-radius: 50%; border: none; cursor: pointer;
+  background: var(--color-primary); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 14px 34px rgba(0,103,227,0.42);
+  transition: transform 0.2s var(--ease-out);
+}
+.chat-float:hover { transform: scale(1.06); }
+.chat-float:focus-visible { outline: 3px solid var(--color-accent-ice); outline-offset: 2px; }
+.chat-chooser {
+  position: absolute; right: 0; bottom: 70px; width: 288px;
+  background: #fff; border-radius: var(--radius-md); padding: 14px;
+  box-shadow: 0 22px 54px rgba(3,23,67,0.3);
+  animation: pop-in 0.2s var(--ease-out);
+}
+.chat-chooser-head { display: flex; align-items: center; justify-content: space-between; }
+.chat-chooser-head strong { font-family: var(--font-display); font-size: 1.05rem; color: var(--color-ink-heading); }
+.chat-chooser-close { border: none; background: transparent; color: var(--color-text-muted); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.chat-chooser-note { font-size: 0.8125rem; color: var(--color-text-muted); margin: 2px 0 10px; }
+.chat-chooser-options { display: flex; flex-direction: column; gap: 8px; }
+.chat-option {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  min-height: 56px; padding: 8px 12px; border-radius: 12px;
+  border: 1px solid var(--color-border); background: var(--color-surface);
+  text-align: left; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+}
+.chat-option:hover { border-color: var(--color-primary); background: var(--color-primary-tint); }
+.chat-option-icon { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
+.chat-option--whatsapp .chat-option-icon { background: #25D366; }
+.chat-option--telegram .chat-option-icon { background: #229ED9; }
+.chat-option-text { display: flex; flex-direction: column; }
+.chat-option-text strong { font-family: var(--font-display); color: var(--color-ink-heading); }
+.chat-option-text span { font-size: 0.78rem; color: var(--color-text-muted); }
+
+/* ---------- admin: chat contacts ---------- */
+.admin-form-grid--contact { grid-template-columns: 160px 1fr; align-items: end; }
+.admin-h3 { font-family: var(--font-display); font-size: 1rem; color: var(--color-ink-heading); margin: 20px 0 8px; }
+.admin-contact-group { margin-top: 4px; }
+.admin-contact-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 12px 14px; border: 1px solid var(--color-border-hairline);
+  border-radius: 10px; background: #fff;
+}
+.admin-contact-row.is-off { opacity: 0.62; }
+.admin-contact-main { display: flex; flex-direction: column; flex: 1 1 150px; min-width: 0; }
+.admin-contact-tools { display: flex; align-items: center; gap: 6px; }
+.admin-ghost-btn--danger { color: #B3261E; }
