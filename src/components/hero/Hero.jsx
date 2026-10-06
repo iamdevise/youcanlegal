@@ -1,10 +1,9 @@
-import { useApplyModal } from '../apply/ApplyModalHost';
+import { Link } from 'react-router-dom';
 
 // Homepage hero — headline, stats, CTA and the owner's hero portrait.
 // The portrait is the real brand asset (man.png), not the video thumbnail, so
 // no ghost text ("Who We Are? / Watch now") appears behind the headline.
 export default function Hero() {
-  const { openApply } = useApplyModal();
 
   return (
     <section className="hero" id="top" data-component="hero-section">
@@ -25,9 +24,10 @@ export default function Hero() {
               </div>
             </div>
           </div>
-          <button type="button" className="btn btn-primary" onClick={() => openApply('Work in the EU')}>
+          {/* Lands on the Work in the EU page, scrolled to the opportunities. */}
+          <Link to="/work-in-the-eu/#opportunities" className="btn btn-primary">
             Explore Opportunities
-          </button>
+          </Link>
         </div>
         <div className="hero-media">
           <img src="/assets/images/hero-portrait.png" alt="People who moved abroad to work and study legally" />

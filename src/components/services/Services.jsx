@@ -22,7 +22,8 @@ function ArrowIcon() {
 
 const CARDS = [
   {
-    to: '/work-in-the-eu/',
+    // Straight to the Available Opportunities cards, not the top of the page.
+    to: '/work-in-the-eu/#opportunities',
     title: 'Work in the EU',
     image: '/assets/images/services/eu-work.jpg',
     alt: 'Smiling worker in a navy cap and hi-vis vest in front of the European Union flag',
