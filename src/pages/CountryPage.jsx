@@ -67,7 +67,7 @@ export default function CountryPage({ countryKey }) {
         </div>
       </div>
 
-      <JobOffer offer={offer} />
+      <JobOffer offer={offer} onApply={() => openApply(program)} />
       <ApplyForm program={program} />
       <Numbers />
       <Testimonials />

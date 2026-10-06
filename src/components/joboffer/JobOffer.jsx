@@ -1,5 +1,11 @@
+import ApplyButton from '../apply/ApplyButton';
+
 // Renders the structured job-offer blocks for a country (data-driven from joboffers.js).
-export default function JobOffer({ offer, embedded = false }) {
+//
+// `onApply` adds the Apply Now button after the last block. When the offer is
+// shown inside the Read More popup (`embedded`), a sticky bar is added as well so
+// the button is always in view without scrolling to the end.
+export default function JobOffer({ offer, embedded = false, onApply }) {
   return (
     <section className="job-offer" data-component="job-offer" style={embedded ? { padding: '10px 0 0' } : undefined}>
       <div className="container" style={embedded ? { padding: 0 } : undefined}>
@@ -62,9 +68,23 @@ export default function JobOffer({ offer, embedded = false }) {
               <div className="notice-inline">
                 <strong>Important:</strong> No sponsorship provided · All programs are paid
               </div>
+
+              {/* Apply at the end of the offer */}
+              {onApply && (
+                <div className="job-offer-apply">
+                  <ApplyButton onClick={onApply} />
+                </div>
+              )}
             </div>
           </div>
         ))}
+
+        {/* Sticky Apply bar inside the Read More popup */}
+        {embedded && onApply && (
+          <div className="job-offer-sticky">
+            <ApplyButton onClick={onApply} />
+          </div>
+        )}
       </div>
     </section>
   );

@@ -2,18 +2,27 @@ import { useState } from 'react';
 import SectionHeading from '../common/SectionHeading';
 import JobOffer from '../joboffer/JobOffer';
 import { COUNTRY_OFFERS } from '../../data/joboffers';
+import { useApplyModal } from '../apply/ApplyModalHost';
 import { X } from 'lucide-react';
 
 // "Available Opportunities" — pale blue tinted cards, flag left-aligned inside
 // the card, country name, one-line description and a solid blue "Read More".
-// Used on the Work in the EU page; the same cards also open the country offers.
+// Used on the Work in the EU page; the same cards open the country offers.
+//
+// This section carries id="opportunities", which every "Work in the EU" link on
+// the site targets, so visitors land straight on these three cards.
+//
+// The Apply button inside the Read More popup opens the application popup on top
+// with that country's program pre-selected; closing it returns to the job offer
+// because this popup stays mounted underneath.
 
 export default function Destinations() {
   const [modal, setModal] = useState(null); // 'poland' | 'slovakia' | 'serbia'
+  const { openApply } = useApplyModal();
   const keys = ['poland', 'slovakia', 'serbia'];
 
   return (
-    <section className="destinations" data-component="destinations">
+    <section className="destinations" id="opportunities" data-component="destinations">
       <div className="container">
         <SectionHeading eyebrow="our destinations" title="Available Opportunities" />
         <div className="dest-grid">
@@ -46,7 +55,11 @@ export default function Destinations() {
               <X size={20} />
             </button>
             <div className="modal-body">
-              <JobOffer offer={COUNTRY_OFFERS[modal]} embedded />
+              <JobOffer
+                offer={COUNTRY_OFFERS[modal]}
+                embedded
+                onApply={() => openApply(`Work in ${COUNTRY_OFFERS[modal].country}`)}
+              />
             </div>
           </div>
         </div>
