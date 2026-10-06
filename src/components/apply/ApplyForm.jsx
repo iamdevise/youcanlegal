@@ -57,24 +57,31 @@ export default function ApplyForm({ program = 'Work in the EU', variant = 'secti
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form]);
 
-  // Never let the on-screen keyboard hide the field being typed in.
+  // Never let the on-screen keyboard hide the field being typed in: centre the
+  // focused control once the keyboard animation has finished (~250ms).
   useEffect(() => {
     const node = bodyRef.current;
-    if (!node) return;
+    if (!node) return undefined;
     const onFocusIn = (event) => {
       const el = event.target;
-      if (!el.matches || !el.matches('input, select, textarea, button[data-combo-trigger]')) return;
+      if (!el.matches || !el.matches('input, select, textarea, .combo-trigger')) return;
       window.setTimeout(() => {
-        el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      }, 260);
+        if (typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }, 250);
     };
     node.addEventListener('focusin', onFocusIn);
     return () => node.removeEventListener('focusin', onFocusIn);
   }, []);
 
-  // Scroll the step body back to the top whenever the step changes.
+  // New step: scroll the body back to the top and move focus to the step itself,
+  // so a keyboard user is not left on the Next button. The body is focused rather
+  // than the first field, which would pop the keyboard open before the applicant
+  // has read the new step.
   useEffect(() => {
-    if (bodyRef.current) bodyRef.current.scrollTop = 0;
+    const node = bodyRef.current;
+    if (!node) return;
+    node.scrollTop = 0;
+    node.focus({ preventScroll: true });
   }, [step]);
 
   const stepError = useMemo(() => {
@@ -112,6 +119,29 @@ export default function ApplyForm({ program = 'Work in the EU', variant = 'secti
   const goBack = () => {
     setStatus({ state: 'idle', message: '' });
     setStep((s) => Math.max(1, s - 1));
+  };
+
+  // Enter moves to the next field, and from the last field to the next step.
+  // Never runs for the country dropdowns — they handle Enter themselves and stop
+  // the event before it reaches here.
+  const onFormKeyDown = (event) => {
+    if (event.key !== 'Enter') return;
+    const el = event.target;
+    if (!el.matches || !el.matches('input') || el.type === 'checkbox' || el.type === 'submit') return;
+    if (el.closest('.combo')) return;
+    event.preventDefault();
+    const body = bodyRef.current;
+    const focusables = body
+      ? Array.from(body.querySelectorAll('input:not([type="checkbox"]), .combo-trigger')).filter(
+          (n) => !n.disabled && n.offsetParent !== null
+        )
+      : [];
+    const index = focusables.indexOf(el);
+    if (index >= 0 && index < focusables.length - 1) {
+      focusables[index + 1].focus();
+      return;
+    }
+    if (step < 3) goNext();
   };
 
   const handleSubmit = async (event) => {
@@ -221,7 +251,15 @@ export default function ApplyForm({ program = 'Work in the EU', variant = 'secti
         <label htmlFor="af-name">
           Your Full Name <span className="req">*</span>
         </label>
-        <input id="af-name" type="text" value={form.fullName} onChange={set('fullName')} autoComplete="name" required />
+        <input
+          id="af-name"
+          type="text"
+          value={form.fullName}
+          onChange={set('fullName')}
+          autoComplete="name"
+          enterKeyHint="next"
+          required
+        />
       </div>
     </>
   );
@@ -234,7 +272,17 @@ export default function ApplyForm({ program = 'Work in the EU', variant = 'secti
           <label htmlFor="af-age">
             How old are you? <span className="req">*</span>
           </label>
-          <input id="af-age" type="number" min="16" max="70" inputMode="numeric" value={form.age} onChange={set('age')} required />
+          <input
+            id="af-age"
+            type="number"
+            min="16"
+            max="70"
+            inputMode="numeric"
+            enterKeyHint="next"
+            value={form.age}
+            onChange={set('age')}
+            required
+          />
         </div>
         <div className="af-field">
           <label htmlFor="af-type">
@@ -254,7 +302,16 @@ export default function ApplyForm({ program = 'Work in the EU', variant = 'secti
         <label htmlFor="af-email">
           Your Email <span className="req">*</span>
         </label>
-        <input id="af-email" type="email" value={form.email} onChange={set('email')} autoComplete="email" required />
+        <input
+          id="af-email"
+          type="email"
+          value={form.email}
+          onChange={set('email')}
+          inputMode="email"
+          autoComplete="email"
+          enterKeyHint="next"
+          required
+        />
       </div>
 
       <div className="af-field">
@@ -276,8 +333,9 @@ export default function ApplyForm({ program = 'Work in the EU', variant = 'secti
             placeholder="7XX XXX XXX"
             value={form.whatsapp}
             onChange={set('whatsapp')}
-            autoComplete="tel"
+            autoComplete="tel-national"
             inputMode="tel"
+            enterKeyHint="done"
             required
           />
         </div>
@@ -338,6 +396,7 @@ export default function ApplyForm({ program = 'Work in the EU', variant = 'secti
     <form
       className={`apply-form${isModal ? ' apply-form--modal' : ''}`}
       onSubmit={handleSubmit}
+      onKeyDown={onFormKeyDown}
       noValidate
       data-component="application-form"
     >
@@ -379,7 +438,13 @@ export default function ApplyForm({ program = 'Work in the EU', variant = 'secti
             </div>
           </div>
 
-          <div className="af-body" ref={bodyRef}>
+          <div
+            className="af-body"
+            ref={bodyRef}
+            tabIndex={-1}
+            role="group"
+            aria-label={`Step ${step} of 3: ${STEP_TITLES[step - 1]}`}
+          >
             {status.state === 'error' && (
               <div className="af-alert" role="alert">
                 {status.message}

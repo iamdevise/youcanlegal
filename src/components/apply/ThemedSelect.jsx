@@ -41,6 +41,8 @@ export default function ThemedSelect({ id, value, onChange, options, placeholder
     if (!open) {
       if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
+        // Keep the form's Enter handler from moving to the next step as well.
+        event.stopPropagation();
         setOpen(true);
       }
       return;
@@ -53,6 +55,7 @@ export default function ThemedSelect({ id, value, onChange, options, placeholder
       setActive((i) => Math.max(i - 1, 0));
     } else if (event.key === 'Enter') {
       event.preventDefault();
+      event.stopPropagation();
       commit(options[active]);
     } else if (event.key === 'Tab') {
       setOpen(false);

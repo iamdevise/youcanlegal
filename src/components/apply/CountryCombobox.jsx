@@ -111,6 +111,8 @@ export default function CountryCombobox({
     if (!open) {
       if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
+        // Stop here: the form's Enter handler would otherwise move to the next step.
+        event.stopPropagation();
         setOpen(true);
       }
       return;
@@ -129,6 +131,8 @@ export default function CountryCombobox({
       setActive(Math.max(0, filtered.length - 1));
     } else if (event.key === 'Enter') {
       event.preventDefault();
+      // Selecting a country must not advance the step as well.
+      event.stopPropagation();
       commit(filtered[active]);
     } else if (event.key === 'Tab') {
       setOpen(false);

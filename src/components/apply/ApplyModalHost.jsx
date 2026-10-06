@@ -25,6 +25,25 @@ function ApplyModal({ program, onClose }) {
     };
   }, []);
 
+  // Keyboard-safe height. When the on-screen keyboard opens, visualViewport
+  // shrinks; publishing the real visible height as --vvh lets the card shrink to
+  // fit instead of being pushed off screen (the CSS falls back to 100dvh).
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return undefined;
+    const apply = () => {
+      document.documentElement.style.setProperty('--vvh', `${Math.round(vv.height)}px`);
+    };
+    apply();
+    vv.addEventListener('resize', apply);
+    vv.addEventListener('scroll', apply);
+    return () => {
+      vv.removeEventListener('resize', apply);
+      vv.removeEventListener('scroll', apply);
+      document.documentElement.style.removeProperty('--vvh');
+    };
+  }, []);
+
   // Move focus into the dialog on open.
   useEffect(() => {
     const node = cardRef.current;
