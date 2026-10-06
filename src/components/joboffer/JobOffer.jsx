@@ -69,8 +69,10 @@ export default function JobOffer({ offer, embedded = false, onApply }) {
                 <strong>Important:</strong> No sponsorship provided · All programs are paid
               </div>
 
-              {/* Apply at the end of the offer */}
-              {onApply && (
+              {/* Apply at the end of the offer — full-page offers only. In the
+                  Read More popup the sticky bar below is the single Apply button,
+                  so the two can never appear stacked. */}
+              {onApply && !embedded && (
                 <div className="job-offer-apply">
                   <ApplyButton onClick={onApply} />
                 </div>
