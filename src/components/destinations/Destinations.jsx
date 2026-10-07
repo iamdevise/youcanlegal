@@ -17,9 +17,9 @@ import { X } from 'lucide-react';
 // because this popup stays mounted underneath.
 
 export default function Destinations() {
-  const [modal, setModal] = useState(null); // 'poland' | 'slovakia' | 'serbia'
+  const [modal, setModal] = useState(null); // one of COUNTRY_OFFERS' keys
   const { openApply } = useApplyModal();
-  const keys = ['poland', 'slovakia', 'serbia'];
+  const keys = ['poland', 'slovakia', 'serbia', 'spain', 'italy'];
 
   return (
     <section className="destinations" id="opportunities" data-component="destinations">

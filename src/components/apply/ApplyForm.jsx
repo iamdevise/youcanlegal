@@ -4,6 +4,9 @@ import { ArrowRight, Check, Loader2 } from 'lucide-react';
 import SectionHeading from '../common/SectionHeading';
 import CountryCombobox from './CountryCombobox';
 import ThemedSelect from './ThemedSelect';
+import { COUNTRY_OFFERS, EU_OFFERS } from '../../data/joboffers';
+import { offerByProgram, offerConsentText, offerFootnote } from '../../lib/offerNotice';
+import ChatLink from '../chat/ChatLink';
 
 // The one and only application form, shared by the Apply popup (variant
 // "modal") and the inline form on the Work in the EU / country pages (variant
@@ -23,6 +26,23 @@ const APPLICANT_OPTIONS = [
 
 const STEP_TITLES = ['About you', 'Contact', 'Confirm'];
 
+/** Turn the server's machine-readable error code into an honest message. */
+function messageForCode(code, serverMessage) {
+  switch (code) {
+    case 'INVALID_INPUT':
+      // Server-side validation — the specific field message beats any generic text.
+      return serverMessage || 'Please check the highlighted fields and try again.';
+    case 'RATE_LIMITED':
+      return 'You have sent several applications in a short time. Please wait a few minutes and try again.';
+    case 'NOT_CONFIGURED':
+    case 'SAVE_FAILED':
+    case 'EMAIL_FAILED':
+      return 'Something went wrong on our side. Please try again shortly, or contact us on WhatsApp or Telegram.';
+    default:
+      return serverMessage || 'Something went wrong on our side. Please try again shortly.';
+  }
+}
+
 const INITIAL = {
   citizenship: '',
   livesInPassportCountry: '',
@@ -39,6 +59,14 @@ const INITIAL = {
 };
 
 export default function ApplyForm({ program = 'Work in the EU', variant = 'section', onSuccess, onCancel }) {
+  // Which offer's sponsorship wording applies to this form instance. Unknown
+  // programs (e.g. the generic "Work in the EU") fall back to the default text.
+  const offer = useMemo(
+    () => offerByProgram(program, { ...COUNTRY_OFFERS, eu: EU_OFFERS }),
+    [program]
+  );
+  const consentText = useMemo(() => offerConsentText(offer), [offer]);
+  const footnote = useMemo(() => offerFootnote(offer), [offer]);
   const [form, setForm] = useState(INITIAL);
   const [honeypot, setHoneypot] = useState('');
   const [step, setStep] = useState(1);
@@ -177,13 +205,19 @@ export default function ApplyForm({ program = 'Work in the EU', variant = 'secti
         body: JSON.stringify(payload),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.ok === false) throw new Error(data.error || 'SUBMIT_FAILED');
+      if (!response.ok || data.ok === false) {
+        // The server tells us why it failed; show an accurate message for it.
+        console.error('[apply] submission rejected:', data.code || 'UNKNOWN', data.error || '');
+        setStatus({ state: 'error', message: messageForCode(data.code, data.error) });
+        return;
+      }
       setStatus({ state: 'success', message: '' });
       setForm(INITIAL);
       setStep(1);
       if (onSuccess) onSuccess();
     } catch (err) {
-      // The form state is never cleared on failure, so nothing typed is lost.
+      // fetch itself threw → the visitor is offline or the network broke.
+      console.error('[apply] network failure during submit:', err);
       setStatus({
         state: 'error',
         message:
@@ -354,10 +388,7 @@ export default function ApplyForm({ program = 'Work in the EU', variant = 'secti
       </div>
       <div className="af-consent">
         <input id="af-c2" type="checkbox" checked={form.consentService} onChange={set('consentService')} />
-        <label htmlFor="af-c2">
-          I understand that the company provides paid guidance and support, including employment documents and a work permit. Visa sponsorship is not
-          included, and the final visa decision is made by the relevant immigration authorities.
-        </label>
+        <label htmlFor="af-c2">{consentText}</label>
       </div>
       <div className="af-consent">
         <input id="af-c3" type="checkbox" checked={form.consentContact} onChange={set('consentContact')} />
@@ -369,7 +400,8 @@ export default function ApplyForm({ program = 'Work in the EU', variant = 'secti
           .
         </label>
       </div>
-      <p className="af-footnote">No sponsorship provided · All programs are paid</p>
+      {/* Sponsorship/paid line follows the offer's data; hidden when empty. */}
+      {footnote ? <p className="af-footnote">{footnote}</p> : null}
     </>
   );
 
@@ -418,6 +450,8 @@ export default function ApplyForm({ program = 'Work in the EU', variant = 'secti
           </span>
           <strong>Thank you, we will contact you on WhatsApp/email.</strong>
           <p>Your application has been received. Our team will reach out to schedule your free consultation.</p>
+          {/* Chat CTA on the success screen — shows whichever types are active. */}
+          <ChatLink className="af-success-chat" />
           {onCancel && (
             <button type="button" className="btn-af-secondary" onClick={onCancel}>
               Close

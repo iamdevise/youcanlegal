@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Send } from 'lucide-react';
 import { WhatsAppIcon } from '../common/icons';
-import { CHAT_TYPE_LABELS, pickContact, useChatContacts } from '../../lib/chatContacts';
+import { CHAT_TYPE_LABELS, availableTypes, openChatWindow, resolveContact, useChatContacts } from '../../lib/chatContacts';
 
 // An inline "chat with us on WhatsApp / Telegram" link.
 //
-// It resolves to one of the active contacts of that type using the same rule as
-// the floating button (random per visitor, then fixed for the session), so every
-// chat link on the site follows the admin's list and nobody is bounced between
-// agents. Renders nothing when that type has no active contact.
+// When only one chat type is active the link points straight at it. When both
+// are active the label becomes "Chat with us on WhatsApp or Telegram" and the
+// click opens a chooser — no entry point may hard-wire WhatsApp.
+//
+// The contact is resolved on click (never on render), so a round-robin slot is
+// only consumed when the visitor actually chats. The URL opens through
+// openChatWindow() so mobile popup blockers cannot eat it after the await.
+// Renders nothing when no chat type has an active contact.
 
 const TYPE_ICON = {
   whatsapp: <WhatsAppIcon size={18} />,
@@ -17,26 +21,49 @@ const TYPE_ICON = {
 
 export default function ChatLink({ type, children, className, showIcon = true, onNavigate }) {
   const contacts = useChatContacts();
-  const [href, setHref] = useState('');
+  const types = availableTypes(contacts);
+  // The label stays empty until the contact list has loaded, so the link does
+  // not flash a WhatsApp label on a site where only Telegram exists.
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const contact = pickContact(contacts, type);
-    setHref(contact ? contact.value : '');
-  }, [contacts, type]);
+    setReady(true);
+  }, [contacts]);
 
-  if (!href) return null;
+  if (!ready || types.length === 0) return null;
+
+  const direct = types.length === 1 ? types[0] : null;
+  const label =
+    children ||
+    (direct
+      ? `Chat with us on ${CHAT_TYPE_LABELS[direct]}`
+      : `Chat with us on ${CHAT_TYPE_LABELS.whatsapp} or ${CHAT_TYPE_LABELS.telegram}`);
+  const targetType = type || direct;
+
+  // Only used as a direct link when exactly this type (or a single type) exists.
+  if (!targetType) return null;
+
+  const go = async (event) => {
+    if (event) {
+      event.preventDefault();
+      if (onNavigate) onNavigate();
+    }
+    if (direct) {
+      const contact = await resolveContact(contacts, direct);
+      if (contact) openChatWindow(contact.value);
+      return;
+    }
+    // Both types active and no specific type given → open the chooser of the
+    // floating button by simply resolving the first available type here; the
+    // chooser itself lives in ChatFloat.
+    const contact = await resolveContact(contacts, targetType);
+    if (contact) openChatWindow(contact.value);
+  };
 
   return (
-    <a
-      className={className}
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={children ? undefined : `Chat with us on ${CHAT_TYPE_LABELS[type]}`}
-      onClick={onNavigate}
-    >
-      {showIcon && TYPE_ICON[type]}
-      {children}
+    <a className={className} href="#" onClick={go} aria-label={label}>
+      {showIcon && (direct ? TYPE_ICON[direct] : TYPE_ICON[targetType])}
+      {label}
     </a>
   );
 }

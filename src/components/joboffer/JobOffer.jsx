@@ -1,6 +1,12 @@
 import ApplyButton from '../apply/ApplyButton';
+import { offerNotice } from '../../lib/offerNotice';
 
 // Renders the structured job-offer blocks for a country (data-driven from joboffers.js).
+
+/** Remove a leading "1." / "2)" / "3 -" from a step so the <ol> numbers it once. */
+function stripLeadingNumber(text) {
+  return String(text).replace(/^\s*\d{1,2}\s*[.)\u2013-]\s+/, '');
+}
 //
 // `onApply` adds the Apply Now button after the last block. When the offer is
 // shown inside the Read More popup (`embedded`), a sticky bar is added as well so
@@ -53,10 +59,11 @@ export default function JobOffer({ offer, embedded = false, onApply }) {
                   );
                 }
                 if (b.type === 'steps') {
+                  // The <ol> does the numbering; the items must never carry their own.
                   return (
                     <ol key={i} className="steps">
                       {b.items.map((it, j) => (
-                        <li key={j} style={{ marginBottom: 6 }}>{j + 1}. {it}</li>
+                        <li key={j}>{stripLeadingNumber(it)}</li>
                       ))}
                     </ol>
                   );
@@ -65,9 +72,16 @@ export default function JobOffer({ offer, embedded = false, onApply }) {
                 // owner manages all payment content outside this site.
                 return null;
               })}
-              <div className="notice-inline">
-                <strong>Important:</strong> No sponsorship provided · All programs are paid
-              </div>
+              {/* Sponsorship/paid wording follows the offer's data (lib/offerNotice.js). */}
+              {(() => {
+                const notice = offerNotice(offer);
+                if (!notice) return null;
+                return (
+                  <div className="notice-inline">
+                    <strong>Important:</strong> {notice.replace(/^Important:\s*/, '')}
+                  </div>
+                );
+              })()}
 
               {/* Apply at the end of the offer — full-page offers only. In the
                   Read More popup the sticky bar below is the single Apply button,

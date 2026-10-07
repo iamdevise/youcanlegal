@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { ADMIN_EMAIL, SETTINGS_DEFAULTS, SETTINGS_FIELDS, fetchSiteSettings, invalidateSiteSettings } from '../lib/settings';
 import {
   CHAT_TYPE_LABELS,
+  availableTypes,
   contactDisplayValue,
   invalidateChatContacts,
   normalizeContactValue,
@@ -54,6 +55,8 @@ export default function AdminPage() {
   const [settings, setSettings] = useState({ ...SETTINGS_DEFAULTS });
   const [contacts, setContacts] = useState([]);
   const [contactDraft, setContactDraft] = useState(EMPTY_CONTACT);
+  const [roundRobin, setRoundRobin] = useState(false);
+  const [rrSaving, setRrSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
@@ -116,6 +119,8 @@ export default function AdminPage() {
       setApplications(appsRes.data || []);
       setActivity(activityRes.data || []);
       setContacts(contactsRes.error ? [] : contactsRes.data || []);
+      const rrRes = await db.from('site_settings').select('value').eq('key', 'chat_round_robin').maybeSingle();
+      setRoundRobin(!rrRes.error && rrRes.data?.value === 'on');
       const fresh = await fetchSiteSettings(true);
       setSettings(fresh);
     } catch (err) {
@@ -349,6 +354,40 @@ export default function AdminPage() {
     await loadAll();
   };
 
+  // -------------------------------------------------- round-robin controls ---
+  const saveRoundRobin = async (next) => {
+    if (!db) return;
+    setRrSaving(true);
+    try {
+      const { error } = await db
+        .from('site_settings')
+        .upsert({ key: 'chat_round_robin', value: next ? 'on' : 'off' }, { onConflict: 'key' });
+      if (error) {
+        setNotice(`Could not save the round-robin switch: ${error.message}`);
+        return;
+      }
+      setRoundRobin(next);
+      invalidateSiteSettings();
+      setNotice(next ? 'Round-robin is on. Visitors are shared equally between active agents.' : 'Round-robin is off. Visitors get a random agent again.');
+      await logActivity('chat_round_robin', { enabled: next });
+    } finally {
+      setRrSaving(false);
+    }
+  };
+
+  const resetAssignments = async () => {
+    if (!db) return;
+    if (!window.confirm('Reset the assignment counters of every agent back to 0?')) return;
+    const { error } = await db.from('chat_contacts').update({ assigned_count: 0, last_assigned_at: null }).neq('id', '00000000-0000-0000-0000-000000000000');
+    if (error) {
+      setNotice(`Could not reset the counters: ${error.message}`);
+      return;
+    }
+    setContacts((list) => list.map((c) => ({ ...c, assigned_count: 0, last_assigned_at: null })));
+    setNotice('Assignment counters reset to 0.');
+    await logActivity('chat_round_robin_reset', {});
+  };
+
   // ----------------------------------------------------------------- views ---
   if (!authReady) {
     return (
@@ -525,9 +564,51 @@ export default function AdminPage() {
           <section className="admin-card">
             <h2 className="admin-h2">Chat contacts</h2>
             <p className="admin-muted">
-              Every WhatsApp number and Telegram link you add here feeds the floating chat button and the forms&apos; chat links. Disabled contacts stay
-              hidden from the site. When a visitor taps chat, one active contact of that type is chosen at random and kept for their session.
+              Every WhatsApp number and Telegram link you add here feeds the floating chat button, the footer and the forms&apos; chat links. Disabled
+              contacts stay hidden from the site.
             </p>
+
+            {/* Live status: which types can visitors actually reach? */}
+            <p className="admin-chat-status" data-testid="chat-status">
+              <strong>WhatsApp: {contacts.filter((c) => c.type === 'whatsapp' && c.active).length} active</strong>
+              {' · '}
+              <strong>Telegram: {contacts.filter((c) => c.type === 'telegram' && c.active).length} active</strong>
+              {availableTypes(contacts.filter((c) => c.active)).length === 1 && (
+                <> — visitors will only see {CHAT_TYPE_LABELS[availableTypes(contacts.filter((c) => c.active))[0]]}. Add a contact of the other type to let
+                them choose.</>
+              )}
+              {availableTypes(contacts.filter((c) => c.active)).length === 0 && <> — visitors see no chat button at all. Add a contact to enable chat.</>}
+            </p>
+
+            {/* Round-robin switch, default OFF */}
+            <label className="admin-switch-row">
+              <input
+                type="checkbox"
+                checked={roundRobin}
+                disabled={rrSaving}
+                onChange={(e) => saveRoundRobin(e.target.checked)}
+              />
+              <span>Share visitors equally between agents (round-robin)</span>
+            </label>
+            <p className="admin-muted admin-switch-help">
+              Works separately for WhatsApp and Telegram. Only active when a type has 2 or more active agents.
+            </p>
+            {roundRobin && (
+              <>
+                {['whatsapp', 'telegram'].map((type) => {
+                  const count = contacts.filter((c) => c.type === type && c.active).length;
+                  return count > 0 && count < 2 ? (
+                    <p className="admin-warning" key={type}>
+                      Round-robin is on, but {CHAT_TYPE_LABELS[type]} has only {count} active agent{count === 1 ? '' : 's'} — visitors on{' '}
+                      {CHAT_TYPE_LABELS[type]} go straight to that agent.
+                    </p>
+                  ) : null;
+                })}
+                <button type="button" className="admin-ghost-btn" onClick={resetAssignments}>
+                  Reset counts
+                </button>
+              </>
+            )}
 
             <form className="admin-form-grid admin-form-grid--contact" onSubmit={addContact}>
               <label className="admin-field">
@@ -579,7 +660,9 @@ export default function AdminPage() {
                         <div className={`admin-contact-row${c.active ? '' : ' is-off'}`} key={c.id}>
                           <span className="admin-contact-main">
                             <strong>{c.label || CHAT_TYPE_LABELS[type]}</strong>
-                            <span className="admin-row-sub">{contactDisplayValue(c.type, c.value)}</span>
+                            <span className="admin-row-sub">
+                              {contactDisplayValue(c.type, c.value)} · {c.assigned_count || 0} assigned
+                            </span>
                           </span>
                           <span className={`admin-status ${c.active ? 'admin-status--approved' : 'admin-status--rejected'}`}>
                             {c.active ? 'active' : 'disabled'}

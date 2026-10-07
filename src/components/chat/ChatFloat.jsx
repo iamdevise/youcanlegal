@@ -1,18 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { MessageCircle, Send, X } from 'lucide-react';
 import { WhatsAppIcon } from '../common/icons';
-import { availableTypes, pickContact, useChatContacts, CHAT_TYPE_LABELS } from '../../lib/chatContacts';
+import { availableTypes, openChatWindow, resolveContact, useChatContacts, CHAT_TYPE_LABELS } from '../../lib/chatContacts';
 
 // Floating chat button.
 //
-// It is deliberately a neutral chat bubble in the brand blue, because it can
-// lead to either app. Tapping it opens a chooser ("Chat with us") listing only
-// the types that actually have an active contact. If just one type exists the
-// chooser is skipped and the visitor goes straight there. With no active
-// contacts at all the button is not rendered.
+// A neutral chat bubble in the brand blue, because it can lead to either app.
+// Tapping it opens a chooser ("Chat with us") listing only the types that have
+// at least one active contact. If just one type exists the chooser is skipped
+// and the visitor goes straight there. With no active contacts at all the
+// button is not rendered.
 //
-// The contact itself is picked by pickContact(): random per visitor, then held
-// in sessionStorage so one person keeps talking to the same agent.
+// The contact is resolved on click (never on render) via resolveContact():
+// random per visitor when round-robin is off, server-assigned and remembered
+// for 30 days when it is on. The link opens through openChatWindow() so mobile
+// popup blockers cannot eat it after the await.
 
 const TYPE_ICON = {
   whatsapp: <WhatsAppIcon size={22} />,
@@ -23,6 +25,7 @@ export default function ChatFloat() {
   const contacts = useChatContacts();
   const types = availableTypes(contacts);
   const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
   const rootRef = useRef(null);
   const sheetRef = useRef(null);
 
@@ -46,11 +49,16 @@ export default function ChatFloat() {
 
   if (types.length === 0) return null;
 
-  const go = (type) => {
-    const contact = pickContact(contacts, type);
+  const go = async (type) => {
+    if (busy) return;
+    setBusy(true);
     setOpen(false);
-    if (!contact) return;
-    window.open(contact.value, '_blank', 'noopener,noreferrer');
+    try {
+      const contact = await resolveContact(contacts, type);
+      if (contact) openChatWindow(contact.value);
+    } finally {
+      setBusy(false);
+    }
   };
 
   // Only one type available — skip the chooser entirely.

@@ -62,6 +62,8 @@ function PublicLayout() {
           <Route path="/work-in-poland/" element={<CountryPage countryKey="poland" />} />
           <Route path="/work-in-slovakia/" element={<CountryPage countryKey="slovakia" />} />
           <Route path="/work-in-serbia/" element={<CountryPage countryKey="serbia" />} />
+          <Route path="/work-in-spain/" element={<CountryPage countryKey="spain" />} />
+          <Route path="/work-in-italy/" element={<CountryPage countryKey="italy" />} />
           <Route path="/study-in-the-uk/" element={<StudyInUkPage />} />
           <Route path="/privacy-policy/" element={<PrivacyPage />} />
           <Route path="/blog/" element={<BlogPage />} />

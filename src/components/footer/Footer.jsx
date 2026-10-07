@@ -64,9 +64,9 @@ export default function Footer() {
                     {s.icon}
                   </a>
                 ))}
-                {chatTypes.map((type) => (
-                  <ChatLink key={type} type={type} />
-                ))}
+                {/* One link, not two: with both types active it reads
+                    "Chat with us on WhatsApp or Telegram" and resolves on click. */}
+                <ChatLink />
               </div>
             )}
             {settings.contact_phone && (
@@ -89,6 +89,12 @@ export default function Footer() {
               </li>
               <li>
                 <Link to="/work-in-serbia/">Work in Serbia</Link>
+              </li>
+              <li>
+                <Link to="/work-in-spain/">Seasonal Work in Spain</Link>
+              </li>
+              <li>
+                <Link to="/work-in-italy/">Seasonal Work in Italy</Link>
               </li>
             </ul>
           </div>

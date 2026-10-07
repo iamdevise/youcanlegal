@@ -9,7 +9,7 @@ import { useApplyModal } from '../apply/ApplyModalHost';
 // The logo always shows the full lockup: navy wordmark on light, white on dark.
 
 // Pages whose hero is a dark navy band.
-const DARK_ROUTES = ['/work-in-the-eu/', '/work-in-poland/', '/work-in-slovakia/', '/work-in-serbia/'];
+const DARK_ROUTES = ['/work-in-the-eu/', '/work-in-poland/', '/work-in-slovakia/', '/work-in-serbia/', '/work-in-spain/', '/work-in-italy/'];
 // Pages that open with a light hero the header can sit transparently over.
 const TRANSPARENT_ROUTES = ['/'];
 

@@ -626,6 +626,12 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
 .af-success strong { font-family: var(--font-display); font-size: 1.05rem; color: #fff; }
 .af-success p { font-size: 0.875rem; line-height: 1.4; color: rgba(255,255,255,0.86); }
 .af-success .btn-af-secondary { margin-top: 6px; }
+.af-success-chat {
+  margin-top: 4px; display: inline-flex; align-items: center; gap: 8px;
+  color: #fff; text-decoration: underline; font-weight: 600; font-size: 0.95rem;
+  min-height: 44px;
+}
+.af-success-chat:hover { color: var(--color-accent-ice); }
 
 /* ---------------------------------------------------- high-visibility apply button
    White with navy text: ~15:1 against this gradient card and ~4.6:1 against the
@@ -771,6 +777,23 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
 .job-offer-content ul li { padding-left: 22px; position: relative; }
 .job-offer-content ul li::before { content: ""; position: absolute; left: 0; top: 9px; width: 8px; height: 8px; border-radius: 50%; background: var(--color-primary); }
 .job-offer-content strong { color: var(--color-ink-heading); }
+
+/* Numbered "how it works" lists — one number per step (the <ol> numbers it).
+   Mobile-friendly: hanging indent so wrapped text aligns under the text, not
+   under the number, and comfortable line-height. */
+ol.steps { margin: 14px 0 4px; padding-left: 0; list-style: none; counter-reset: steps; }
+ol.steps > li {
+  position: relative; counter-increment: steps;
+  padding-left: 34px; margin-bottom: 10px; line-height: 1.55;
+}
+ol.steps > li::before {
+  content: counter(steps) "."; position: absolute; left: 0; top: 0;
+  font-family: var(--font-display); font-weight: 700; color: var(--color-primary);
+}
+@media (max-width: 768px) {
+  ol.steps > li { padding-left: 28px; margin-bottom: 12px; line-height: 1.5; }
+  ol.steps > li::before { font-size: 0.95rem; }
+}
 
 /* ---------- coming soon ---------- */
 .coming-soon { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 20px; background: radial-gradient(1200px 600px at 50% -10%, var(--color-primary-tint), #ffffff 60%); }
@@ -1102,6 +1125,13 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
 .admin-contact-main { display: flex; flex-direction: column; flex: 1 1 150px; min-width: 0; }
 .admin-contact-tools { display: flex; align-items: center; gap: 6px; }
 .admin-ghost-btn--danger { color: #B3261E; }
+
+/* ---------- admin: chat status line, round-robin switch ---------- */
+.admin-chat-status { font-size: 0.95rem; color: var(--color-ink-heading); background: var(--color-primary-tint); border-radius: 10px; padding: 10px 14px; }
+.admin-switch-row { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--color-ink-heading); margin: 14px 0 4px; min-height: 44px; cursor: pointer; }
+.admin-switch-row input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--color-primary); }
+.admin-switch-help { margin-top: 0; }
+.admin-warning { color: #8a5b00; background: #fff6e0; border: 1px solid #e8c268; border-radius: 8px; padding: 10px 12px; font-size: 0.875rem; }
 
 /* ===========================================================================
    Roomier mobile application form (max-width: 768px)

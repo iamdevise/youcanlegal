@@ -22,6 +22,8 @@ export const SETTINGS_DEFAULTS = {
   contact_email: 'hello@youcan.legal',
   contact_phone: '',
   notification_email: 'polystaradmin@gmail.com',
+  // Round-robin chat agent assignment — managed in the admin "Chat contacts" tab.
+  chat_round_robin: 'off',
 };
 
 // Field metadata drives the admin Settings form. Telegram / WhatsApp live in the

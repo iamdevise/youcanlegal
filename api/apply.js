@@ -1,23 +1,28 @@
 import { createClient } from '@supabase/supabase-js';
 
-// POST /api/apply — the only server-side endpoint.
+// POST /api/apply  — submit an application (the only server-side endpoint).
+// GET  /api/apply?health=1 — deployment check (booleans only, never secrets).
 //
-// 1. blocks bots (honeypot + basic per-IP rate limit)
-// 2. validates every field server-side with the same rules as the form
-// 3. inserts the row into `applications` using the PUBLIC anon key
-//    (RLS already allows public INSERT and nothing else)
-// 4. emails the admin via Resend
+// Flow:
+//   1. blocks bots (honeypot + per-IP rate limit)
+//   2. validates every field server-side with the same rules as the form
+//   3. tries to save the row into `applications` (public anon key + RLS)
+//   4. tries to email the admin via Resend
+//   5. success for the user when EITHER the row was saved OR the email went out
+//      — an application is never lost just because one channel failed
 //
-// No service_role key is ever used or required. The email step is best-effort:
-// if Resend fails, the application is still saved and the applicant still
-// sees a success message; the failure is only logged.
+// Error responses carry a machine-readable `code`:
+//   INVALID_INPUT | RATE_LIMITED | NOT_CONFIGURED | SAVE_FAILED | EMAIL_FAILED
+//
+// Note on the rate limit: it lives in memory, so it is per serverless instance
+// and resets on cold start — it is a bot guard, not a quota. Raised to 10 per
+// 10 minutes so it does not block testers.
 
 const DEFAULT_NOTIFY_EMAIL = 'polystaradmin@gmail.com';
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
-const RESEND_SENDER = 'onboarding@resend.dev';
 
 const RATE_WINDOW_MS = 10 * 60 * 1000;
-const RATE_MAX = 5;
+const RATE_MAX = 10;
 const rateBuckets = new Map();
 
 function rateLimited(ip) {
@@ -147,23 +152,25 @@ function emailBody(row) {
 }
 
 async function resolveNotifyEmail(supabase) {
+  // 1. site_settings.notification_email (admin editable)
+  // 2. NOTIFY_EMAIL env var
+  // 3. default
   const fallback = str(process.env.NOTIFY_EMAIL) || DEFAULT_NOTIFY_EMAIL;
-  if (!supabase) return fallback;
+  if (!supabase) return { email: fallback, source: 'default' };
   try {
     const { data } = await supabase.from('site_settings').select('value').eq('key', 'notification_email').maybeSingle();
     const value = str(data?.value);
-    return value || fallback;
+    if (value) return { email: value, source: 'site_settings' };
   } catch {
-    return fallback;
+    /* fall through */
   }
+  return { email: str(process.env.NOTIFY_EMAIL) || DEFAULT_NOTIFY_EMAIL, source: process.env.NOTIFY_EMAIL ? 'env' : 'default' };
 }
 
-async function sendEmail(row) {
+async function sendEmail(row, notifyEmail) {
   const apiKey = str(process.env.RESEND_API_KEY);
-  if (!apiKey) {
-    console.warn('[apply] RESEND_API_KEY is not set — application saved, email skipped.');
-    return false;
-  }
+  if (!apiKey) return false; // caller decides whether this is fatal
+  const sender = str(process.env.RESEND_FROM) || 'onboarding@resend.dev';
   const { html, text } = emailBody(row);
   const response = await fetch(RESEND_ENDPOINT, {
     method: 'POST',
@@ -172,8 +179,9 @@ async function sendEmail(row) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: RESEND_SENDER,
-      to: [row.__notifyEmail],
+      from: sender,
+      to: [notifyEmail],
+      reply_to: row.email,
       subject: `New application: ${row.full_name} (${row.program})`,
       html,
       text,
@@ -187,9 +195,29 @@ async function sendEmail(row) {
 }
 
 export default async function handler(req, res) {
+  // ---- health check -------------------------------------------------------
+  // Booleans only — never echo any secret or address value.
+  if (req.method === 'GET') {
+    const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+    if (url.searchParams.get('health') === '1') {
+      const supabaseConfigured = Boolean(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) &&
+        Boolean(process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY);
+      const notifyEmail = str(process.env.NOTIFY_EMAIL);
+      return res.status(200).json({
+        ok: true,
+        supabaseConfigured,
+        resendConfigured: Boolean(str(process.env.RESEND_API_KEY)),
+        // 'env' = NOTIFY_EMAIL set, 'default' = the built-in testing address
+        notifyEmailSource: notifyEmail ? 'env' : 'default',
+      });
+    }
+    res.setHeader('Allow', 'GET, POST');
+    return res.status(405).json({ ok: false, error: 'Method not allowed', code: 'INVALID_INPUT' });
+  }
+
   if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
-    return res.status(405).json({ ok: false, error: 'Method not allowed' });
+    res.setHeader('Allow', 'GET, POST');
+    return res.status(405).json({ ok: false, error: 'Method not allowed', code: 'INVALID_INPUT' });
   }
 
   let body = req.body;
@@ -197,11 +225,11 @@ export default async function handler(req, res) {
     try {
       body = JSON.parse(body);
     } catch {
-      return res.status(400).json({ ok: false, error: 'Invalid JSON body' });
+      return res.status(400).json({ ok: false, error: 'Invalid JSON body', code: 'INVALID_INPUT' });
     }
   }
   if (!body || typeof body !== 'object') {
-    return res.status(400).json({ ok: false, error: 'Invalid request body' });
+    return res.status(400).json({ ok: false, error: 'Invalid request body', code: 'INVALID_INPUT' });
   }
 
   // Honeypot: a real applicant never fills this hidden field.
@@ -210,38 +238,70 @@ export default async function handler(req, res) {
   }
 
   if (rateLimited(clientIp(req))) {
-    return res.status(429).json({ ok: false, error: 'Too many applications from this connection. Please try again later.' });
+    return res.status(429).json({
+      ok: false,
+      code: 'RATE_LIMITED',
+      error: 'Too many applications from this connection. Please try again in a few minutes.',
+    });
   }
 
   const validation = validate(body);
   if (!validation.ok) {
-    return res.status(400).json({ ok: false, error: validation.errors.join('; ') });
+    return res.status(400).json({ ok: false, code: 'INVALID_INPUT', error: validation.errors.join('; ') });
   }
 
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const anonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
   if (!url || !anonKey) {
     console.error('[apply] Supabase public env vars are missing; cannot save the application.');
-    return res.status(500).json({ ok: false, error: 'Service is not configured. Please try again later.' });
+    return res.status(500).json({
+      ok: false,
+      code: 'NOT_CONFIGURED',
+      error: 'Service is not configured. Please try again later.',
+    });
   }
 
   const supabase = createClient(url, anonKey);
   const row = validation.row;
 
-  const { error: insertError } = await supabase.from('applications').insert(row);
-  if (insertError) {
-    console.error('[apply] Supabase insert failed:', insertError.message);
-    return res.status(500).json({ ok: false, error: 'We could not save your application. Please try again.' });
-  }
+  // ---- try BOTH channels; the user succeeds when either one works --------
+  const { email: notifyEmail } = await resolveNotifyEmail(supabase);
 
-  // The application is saved — from here on, every failure is non-fatal.
-  let emailed = false;
+  let saved = false;
+  let saveError = null;
   try {
-    row.__notifyEmail = await resolveNotifyEmail(supabase);
-    emailed = await sendEmail(row);
+    const { error: insertError } = await supabase.from('applications').insert(row);
+    if (insertError) throw new Error(insertError.message);
+    saved = true;
   } catch (err) {
-    console.error('[apply] Email notification failed (application was saved):', err?.message || err);
+    saveError = err?.message || String(err);
+    console.error('[apply] Supabase insert failed:', saveError);
   }
 
-  return res.status(200).json({ ok: true, saved: true, emailed });
+  let emailed = false;
+  let emailError = null;
+  try {
+    emailed = await sendEmail(row, notifyEmail);
+  } catch (err) {
+    emailError = err?.message || String(err);
+    console.error('[apply] Resend email failed (status/body above):', emailError);
+  }
+  if (!emailed && !saveError && emailError === null) {
+    // RESEND_API_KEY missing — not an error worth failing the request over.
+    console.warn('[apply] RESEND_API_KEY is not set — application saved, email skipped.');
+  }
+
+  if (!saved && !emailed) {
+    return res.status(500).json({
+      ok: false,
+      code: 'SAVE_FAILED',
+      error: 'We could not save your application. Please try again, or contact us on WhatsApp or Telegram.',
+    });
+  }
+
+  // At least one channel worked. If exactly one did, flag it for the logs.
+  if (!saved) console.error('[apply] Saved=false but email delivered — application exists only in the admin inbox.');
+  if (!emailed && saveError === null) console.warn('[apply] Email skipped (not configured); application saved to the database.');
+
+  return res.status(200).json({ ok: true, saved, emailed });
 }

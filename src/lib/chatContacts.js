@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './supabase';
+import { fetchSiteSettings } from './settings';
 
 // ---------------------------------------------------------------------------
 // Chat contacts — the WhatsApp numbers and Telegram links the owner manages in
@@ -138,4 +139,100 @@ export function pickContact(contacts, type) {
     /* private mode — the choice just will not persist */
   }
   return chosen;
+}
+
+// ---------------------------------------------------------------------------
+// Round-robin agent assignment (admin switch, default OFF).
+//
+// When the switch is on AND the chosen type has 2+ active agents, the server
+// function assign_chat_contact() hands out the least-assigned agent and bumps
+// its counter. One visitor keeps the same agent: the assignment is remembered
+// in localStorage per type for 30 days, and refreshing or tapping again never
+// consumes another slot. Any failure falls back to pickContact() so chat never
+// breaks. Assignment happens on click, never on render.
+// ---------------------------------------------------------------------------
+
+const RR_KEY = (type) => `ycl_rr_agent_${type}`;
+const RR_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+function readRememberedAssignment(type) {
+  try {
+    const raw = window.localStorage.getItem(RR_KEY(type));
+    if (!raw) return null;
+    const { id, at } = JSON.parse(raw);
+    if (!id || !at || Date.now() - at > RR_TTL_MS) return null;
+    return id;
+  } catch {
+    return null;
+  }
+}
+
+function rememberAssignment(type, id) {
+  try {
+    window.localStorage.setItem(RR_KEY(type), JSON.stringify({ id, at: Date.now() }));
+  } catch {
+    /* private mode — the assignment just will not persist */
+  }
+}
+
+async function roundRobinEnabled() {
+  try {
+    const settings = await fetchSiteSettings();
+    return settings?.chat_round_robin === 'on';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Resolve the contact to send this visitor to for `type`.
+ * - round-robin off (default) or a single agent → today's pickContact() behaviour
+ * - round-robin on and 2+ agents → remembered assignment first, then the
+ *   server-side assign_chat_contact() RPC, remembered for 30 days
+ * Always falls back to pickContact() when anything fails.
+ */
+export async function resolveContact(contacts, type) {
+  const pool = contacts.filter((c) => c.type === type && c.value);
+  if (pool.length === 0) return null;
+  try {
+    if (pool.length >= 2 && (await roundRobinEnabled())) {
+      const remembered = readRememberedAssignment(type);
+      const match = remembered && pool.find((c) => c.id === remembered);
+      if (match) return match;
+
+      if (supabase) {
+        const { data, error } = await supabase.rpc('assign_chat_contact', { p_type: type });
+        if (!error && data && data.length > 0) {
+          const assigned = data[0];
+          // Trust the server only if the contact it returned is really active.
+          const stillActive = pool.find((c) => c.id === assigned.id);
+          if (stillActive) {
+            rememberAssignment(type, assigned.id);
+            return stillActive;
+          }
+        }
+      }
+    }
+  } catch {
+    /* fall through to the classic behaviour */
+  }
+  return pickContact(contacts, type);
+}
+
+/**
+ * Open a chat URL without losing it to a mobile popup blocker: the window is
+ * opened synchronously on click, then pointed at the (async-resolved) URL.
+ */
+export function openChatWindow(url) {
+  const win = window.open('', '_blank');
+  if (win) {
+    try {
+      win.opener = null;
+    } catch {
+      /* some browsers block opener changes on cross-origin windows */
+    }
+    win.location = url;
+  } else {
+    window.location.assign(url);
+  }
 }

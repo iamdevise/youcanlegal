@@ -4,6 +4,10 @@ export const COUNTRY_OFFERS = {
   poland: {
     slug: 'work-in-poland',
     country: 'Poland',
+    program: 'Work in Poland',
+    // Sponsorship notice wording lives in src/lib/offerNotice.js.
+    sponsorship: 'none',
+    paid: true,
     heroTitle: 'Start Your Legal Work Journey in Poland',
     flag: '/assets/images/flag-poland.png',
     tagline: 'Work contract up to 3 years.',
@@ -44,6 +48,9 @@ export const COUNTRY_OFFERS = {
   slovakia: {
     slug: 'work-in-slovakia',
     country: 'Slovakia',
+    program: 'Work in Slovakia',
+    sponsorship: 'none',
+    paid: true,
     heroTitle: 'Start Your Legal Work Journey in Slovakia',
     flag: '/assets/images/flag-slovakia.png',
     tagline: 'Work contract with 2-year Residence Permit.',
@@ -82,9 +89,96 @@ export const COUNTRY_OFFERS = {
       ],
     },
   },
+  spain: {
+    slug: 'work-in-spain',
+    country: 'Spain',
+    program: 'Seasonal Agricultural Worker — Spain',
+    heroTitle: 'Seasonal Agricultural Work in Spain',
+    flag: '/assets/images/flag-spain.png',
+    tagline: 'Seasonal contract, €1,550 per month, housing provided.',
+    // No video for this program yet — the page hides the video band entirely.
+    videoId: '',
+    videoTitle: '',
+    // No client count yet for this program — the hero stat is hidden.
+    clientsStat: '',
+    // Sponsorship terms for this program are not final — no notice shown until
+    // the owner sets it (see lib/offerNotice.js).
+    sponsorship: null,
+    paid: true,
+    sections: [
+      {
+        h: 'Spain — Seasonal Agricultural Worker',
+        blocks: [
+          { type: 'kv', label: 'Position', text: 'Seasonal Agricultural Worker' },
+          { type: 'kv', label: 'Industry', text: 'Agriculture — fruit and vegetable harvesting (strawberries, blueberries, tomatoes, citrus, olives and similar crops)' },
+          { type: 'kv', label: 'Contract term', text: '6 or 9 months, fixed-term. You go, work the season, then return home — legal circular migration, not a permanent stay.' },
+          { type: 'kv', label: 'Salary', text: 'Fixed at €1,550 per month (plus overtime when the harvest is heavy)' },
+          { type: 'kv', label: 'Accommodation', text: 'Provided by the farm, usually free or with a very small deduction' },
+          { type: 'p', text: 'Spain hires foreign workers every year for seasonal farm work. Contracts are signed before you travel, and the exact conditions — tasks, hours, housing and deductions — are confirmed in the contract. Final visa decisions are made by the relevant authorities.' },
+          { type: 'list', title: 'What to expect', items: ['The work is physical: long days in the fields or greenhouses', 'Selection is done through official channels', 'You sign the contract before leaving, get the visa, and travel', 'At the end of the season you return home'] },
+          { type: 'h4', text: 'How it works' },
+          { type: 'steps', items: ['Submit your application', 'Selection through official channels', 'Sign the contract before leaving', 'Get your visa', 'Travel to Spain', 'Work the season', 'Return home'] },
+        ],
+      },
+    ],
+    seo: {
+      h1: 'Seasonal Agricultural Work in Spain — Fruit and Vegetable Harvesting',
+      intro: 'Spain hires foreign workers every year for seasonal farm work, mainly fruit and vegetable harvesting such as strawberries, blueberries, tomatoes, citrus and olives. These are fixed-term contracts under a proper seasonal work scheme: you travel, work the season, and return home afterwards.',
+      p2: 'It is legal circular migration rather than a permanent move. The work is physical — long days in the fields or in greenhouses — and the exact conditions, including tasks, hours, housing and any deductions, are confirmed in the contract you sign before travelling.',
+      sections: [
+        { h2: 'What the Work Involves', p: 'Seasonal agricultural jobs in Spain are focused on harvesting. Crews pick and sort fruit and vegetables, pack them for transport, and help with general farm tasks during the season.', items: ['Harvesting strawberries, blueberries and soft fruit', 'Picking tomatoes, citrus and olives', 'Sorting, grading and packing produce', 'General farm tasks during the harvest'] },
+        { h2: 'Contract, Salary and Accommodation', p: 'Contracts are fixed-term for 6 or 9 months. The salary for this program is fixed at €1,550 per month, with overtime paid when the harvest is heavy. Accommodation is provided by the farm, usually free or with a very small deduction, and the details are confirmed in the contract.' },
+        { h2: 'How the Process Works', p: 'Selection is done through official channels. You sign the contract before leaving, apply for the visa, and travel once it is issued. At the end of the season you return home. Final visa decisions are always made by the relevant authorities — no one can guarantee them.', items: ['Submit your application', 'Selection through official channels', 'Sign the contract before leaving', 'Visa application', 'Travel and work the season', 'Return home after the season'] },
+        { h2: 'Apply for Seasonal Work in Spain', p: 'If you are ready for seasonal farm work in Spain, submit your application and our team will contact you with the next steps and current availability.' },
+      ],
+    },
+  },
+  italy: {
+    slug: 'work-in-italy',
+    country: 'Italy',
+    program: 'Seasonal Agricultural Worker — Italy',
+    heroTitle: 'Seasonal Agricultural Work in Italy',
+    flag: '/assets/images/flag-italy.png',
+    tagline: 'Seasonal contract, €1,250 per month, accommodation arranged.',
+    videoId: '',
+    videoTitle: '',
+    clientsStat: '',
+    sponsorship: null,
+    paid: true,
+    sections: [
+      {
+        h: 'Italy — Seasonal Agricultural Worker',
+        blocks: [
+          { type: 'kv', label: 'Position', text: 'Seasonal Agricultural Worker' },
+          { type: 'kv', label: 'Industry', text: 'Agriculture — fruit and vegetable harvesting (strawberries, blueberries, tomatoes, citrus, olives and similar crops)' },
+          { type: 'kv', label: 'Contract term', text: '6 or 9 months, fixed-term. You go, work the season, then return home — legal circular migration, not a permanent stay.' },
+          { type: 'kv', label: 'Salary', text: '€1,250 per month under the formal contract' },
+          { type: 'kv', label: 'Accommodation', text: 'Arranged' },
+          { type: 'p', text: 'Italy hires foreign workers every year for seasonal farm work. Contracts are signed before you travel, and the exact conditions — tasks, hours and housing — are confirmed in the contract. Final visa decisions are made by the relevant authorities.' },
+          { type: 'list', title: 'What to expect', items: ['The work is physical: long days in the fields or greenhouses', 'Selection is done through official channels', 'You sign the contract before leaving, get the visa, and travel', 'At the end of the season you return home'] },
+          { type: 'h4', text: 'How it works' },
+          { type: 'steps', items: ['Submit your application', 'Selection through official channels', 'Sign the contract before leaving', 'Get your visa', 'Travel to Italy', 'Work the season', 'Return home'] },
+        ],
+      },
+    ],
+    seo: {
+      h1: 'Seasonal Agricultural Work in Italy — Fruit and Vegetable Harvesting',
+      intro: 'Italy hires foreign workers every year for seasonal farm work, mainly fruit and vegetable harvesting such as tomatoes, citrus, olives and soft fruit. These are fixed-term contracts: you travel, work the season under a formal contract, and return home afterwards.',
+      p2: 'This is legal circular migration, not a permanent stay. The work is physical — long days in the fields or greenhouses — and all conditions are confirmed in the contract you sign before travelling.',
+      sections: [
+        { h2: 'What the Work Involves', p: 'Seasonal agricultural jobs in Italy centre on the harvest. Workers pick, sort and pack produce and support general farm tasks through the season.', items: ['Harvesting soft fruit and berries', 'Picking tomatoes, citrus and olives', 'Sorting, grading and packing produce', 'General farm tasks during the harvest'] },
+        { h2: 'Contract, Salary and Accommodation', p: 'Contracts are fixed-term for 6 or 9 months. The salary under the formal contract is €1,250 per month, and accommodation is arranged. The exact conditions are confirmed in the contract before you travel.' },
+        { h2: 'How the Process Works', p: 'Selection is done through official channels. You sign the contract before leaving, apply for the visa, and travel once it is issued. After the season you return home. Final visa decisions are always made by the relevant authorities.', items: ['Submit your application', 'Selection through official channels', 'Sign the contract before leaving', 'Visa application', 'Travel and work the season', 'Return home after the season'] },
+        { h2: 'Apply for Seasonal Work in Italy', p: 'If you are ready for seasonal farm work in Italy, submit your application and our team will contact you with the next steps and current availability.' },
+      ],
+    },
+  },
   serbia: {
     slug: 'work-in-serbia',
     country: 'Serbia',
+    program: 'Work in Serbia',
+    sponsorship: 'none',
+    paid: true,
     heroTitle: 'Start Your Legal Work Journey in Serbia',
     flag: '/assets/images/flag-serbia.png',
     tagline: 'Work visa type D + Residence Permit for 3 years.',
@@ -130,6 +224,10 @@ export const COUNTRY_OFFERS = {
 export const EU_OFFERS = {
   slug: 'work-in-the-eu',
   country: 'Europe',
+  program: 'Work in the EU',
+  // The generic EU program keeps the default 'no sponsorship' wording.
+  sponsorship: 'none',
+  paid: true,
   heroTitle: 'Start Your Legal Work Journey in Europe',
   flag: null,
   tagline: 'Genuine Job Offers, Visa Guidance, and Step-by-Step Support',
