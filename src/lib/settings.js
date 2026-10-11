@@ -19,6 +19,13 @@ export const SETTINGS_DEFAULTS = {
   tiktok_url: 'https://www.tiktok.com/@you_can_legal',
   youtube_url: 'https://www.youtube.com/@youcanlegal',
   linkedin_url: 'https://www.linkedin.com/company/you-can-legal/',
+  // Social link show/hide switches. Stored as 'on' / 'off'. withDefaults()
+  // keeps a missing or empty value as 'on', so existing sites keep their icons.
+  instagram_enabled: 'on',
+  facebook_enabled: 'on',
+  tiktok_enabled: 'on',
+  youtube_enabled: 'on',
+  linkedin_enabled: 'on',
   contact_email: 'contact@youcanlegal.site',
   contact_phone: '',
   notification_email: 'contact@youcanlegal.site',
@@ -34,11 +41,11 @@ export const SETTINGS_DEFAULTS = {
 export const SETTINGS_FIELDS = [
   // Telegram and WhatsApp are no longer single values here — they are managed as
   // a list in the admin's "Chat contacts" section (table `chat_contacts`).
-  { key: 'instagram_url', label: 'Instagram', placeholder: 'https://instagram.com/…', type: 'url' },
-  { key: 'facebook_url', label: 'Facebook', placeholder: 'https://facebook.com/…', type: 'url' },
-  { key: 'tiktok_url', label: 'TikTok', placeholder: 'https://tiktok.com/@…', type: 'url' },
-  { key: 'youtube_url', label: 'YouTube', placeholder: 'https://youtube.com/@…', type: 'url' },
-  { key: 'linkedin_url', label: 'LinkedIn', placeholder: 'https://linkedin.com/company/…', type: 'url' },
+  { key: 'instagram_url', label: 'Instagram', placeholder: 'https://instagram.com/…', type: 'url', toggle: 'instagram_enabled' },
+  { key: 'facebook_url', label: 'Facebook', placeholder: 'https://facebook.com/…', type: 'url', toggle: 'facebook_enabled' },
+  { key: 'tiktok_url', label: 'TikTok', placeholder: 'https://tiktok.com/@…', type: 'url', toggle: 'tiktok_enabled' },
+  { key: 'youtube_url', label: 'YouTube', placeholder: 'https://youtube.com/@…', type: 'url', toggle: 'youtube_enabled' },
+  { key: 'linkedin_url', label: 'LinkedIn', placeholder: 'https://linkedin.com/company/…', type: 'url', toggle: 'linkedin_enabled' },
   // Clear about which email is which — one is shown on the site, the other
   // only receives the application notifications.
   {

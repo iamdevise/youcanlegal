@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { Download, LogOut, RefreshCw, Search, Trash2, X } from 'lucide-react';
 import { ArrowDown, ArrowUp, Plus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -262,7 +262,9 @@ export default function AdminPage() {
   const saveSettings = async (event) => {
     event.preventDefault();
     if (!db) return;
-    const rows = SETTINGS_FIELDS.map((f) => ({ key: f.key, value: settings[f.key] || '', updated_at: new Date().toISOString() }));
+    // Collect every saved key, including the social show/hide toggles.
+    const keys = SETTINGS_FIELDS.flatMap((f) => (f.toggle ? [f.key, f.toggle] : [f.key]));
+    const rows = keys.map((key) => ({ key, value: settings[key] || '', updated_at: new Date().toISOString() }));
     const { error: upsertError } = await db.from('site_settings').upsert(rows, { onConflict: 'key' });
     if (upsertError) {
       setNotice(`Could not save settings: ${upsertError.message}`);
@@ -270,7 +272,7 @@ export default function AdminPage() {
     }
     invalidateSiteSettings();
     setNotice('Settings saved. The public site will show them on the next page load.');
-    await logActivity('settings_update', { keys: SETTINGS_FIELDS.map((f) => f.key) });
+    await logActivity('settings_update', { keys });
   };
 
   // --------------------------------------------------------- chat contacts ---
@@ -728,27 +730,64 @@ export default function AdminPage() {
             <h2 className="admin-h2">Social and contact links</h2>
             <p className="admin-muted">Empty links are hidden on the public site. Applications are emailed to the notification email.</p>
             <form className="admin-form-grid" onSubmit={saveSettings}>
-              {SETTINGS_FIELDS.map((f) => (
-                <label key={f.key} className={f.key === 'notification_email' || f.type === 'textarea' ? 'admin-field admin-field--wide' : 'admin-field'}>
-                  <span>{f.label}</span>
-                  {f.type === 'textarea' ? (
-                    <textarea
-                      rows={4}
-                      value={settings[f.key] || ''}
-                      placeholder={f.placeholder}
-                      onChange={(e) => setSettings((s) => ({ ...s, [f.key]: e.target.value }))}
-                    />
-                  ) : (
-                    <input
-                      type={f.type === 'url' ? 'text' : f.type}
-                      value={settings[f.key] || ''}
-                      placeholder={f.placeholder}
-                      onChange={(e) => setSettings((s) => ({ ...s, [f.key]: e.target.value }))}
-                    />
-                  )}
-                  {f.help && <small className="admin-field-help">{f.help}</small>}
-                </label>
-              ))}
+              {SETTINGS_FIELDS.map((f, index) => {
+                if (f.toggle) {
+                  const enabled = settings[f.toggle] === 'on';
+                  const isLastSocial = !SETTINGS_FIELDS[index + 1]?.toggle;
+                  return (
+                    <Fragment key={f.key}>
+                      <div className="admin-field admin-field--wide">
+                        <span>{f.label}</span>
+                        <div className="admin-social-row">
+                          <input
+                            type="url"
+                            value={settings[f.key] || ''}
+                            placeholder={f.placeholder}
+                            disabled={!enabled}
+                            onChange={(e) => setSettings((s) => ({ ...s, [f.key]: e.target.value }))}
+                          />
+                          <label className="admin-toggle">
+                            <input
+                              type="checkbox"
+                              checked={enabled}
+                              aria-label={`Show ${f.label} on website`}
+                              onChange={(e) => setSettings((s) => ({ ...s, [f.toggle]: e.target.checked ? 'on' : 'off' }))}
+                            />
+                            <span className="admin-toggle-track" aria-hidden="true" />
+                            <span>Show on website</span>
+                          </label>
+                        </div>
+                      </div>
+                      {isLastSocial && (
+                        <p className="admin-muted admin-switch-help admin-field--wide">
+                          Switched-off links are hidden from visitors. Your saved link is kept.
+                        </p>
+                      )}
+                    </Fragment>
+                  );
+                }
+                return (
+                  <label key={f.key} className={f.key === 'notification_email' || f.type === 'textarea' ? 'admin-field admin-field--wide' : 'admin-field'}>
+                    <span>{f.label}</span>
+                    {f.type === 'textarea' ? (
+                      <textarea
+                        rows={4}
+                        value={settings[f.key] || ''}
+                        placeholder={f.placeholder}
+                        onChange={(e) => setSettings((s) => ({ ...s, [f.key]: e.target.value }))}
+                      />
+                    ) : (
+                      <input
+                        type={f.type === 'url' ? 'text' : f.type}
+                        value={settings[f.key] || ''}
+                        placeholder={f.placeholder}
+                        onChange={(e) => setSettings((s) => ({ ...s, [f.key]: e.target.value }))}
+                      />
+                    )}
+                    {f.help && <small className="admin-field-help">{f.help}</small>}
+                  </label>
+                );
+              })}
               <div className="admin-actions">
                 <button type="submit" className="btn btn-primary">
                   Save settings

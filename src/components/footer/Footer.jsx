@@ -24,12 +24,12 @@ export default function Footer() {
 
   // The original footer's order: Facebook, Youtube, Instagram, Linkedin, Tiktok.
   const socials = [
-    { key: 'facebook', href: settings.facebook_url, label: 'Facebook', icon: <Facebook size={18} /> },
-    { key: 'youtube', href: settings.youtube_url, label: 'Youtube', icon: <Youtube size={18} /> },
-    { key: 'instagram', href: settings.instagram_url, label: 'Instagram', icon: <Instagram size={18} /> },
-    { key: 'linkedin', href: settings.linkedin_url, label: 'Linkedin', icon: <Linkedin size={18} /> },
-    { key: 'tiktok', href: settings.tiktok_url, label: 'Tiktok', icon: <TikTokIcon size={18} /> },
-  ].filter((s) => s.href);
+    { key: 'facebook', href: settings.facebook_url, enabled: settings.facebook_enabled === 'on', label: 'Facebook', icon: <Facebook size={18} /> },
+    { key: 'youtube', href: settings.youtube_url, enabled: settings.youtube_enabled === 'on', label: 'Youtube', icon: <Youtube size={18} /> },
+    { key: 'instagram', href: settings.instagram_url, enabled: settings.instagram_enabled === 'on', label: 'Instagram', icon: <Instagram size={18} /> },
+    { key: 'linkedin', href: settings.linkedin_url, enabled: settings.linkedin_enabled === 'on', label: 'Linkedin', icon: <Linkedin size={18} /> },
+    { key: 'tiktok', href: settings.tiktok_url, enabled: settings.tiktok_enabled === 'on', label: 'Tiktok', icon: <TikTokIcon size={18} /> },
+  ].filter((s) => s.href && s.enabled);
 
   return (
     <footer className="site-footer" id="contacts" data-component="site-footer">
