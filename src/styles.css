@@ -632,6 +632,8 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   min-height: 44px;
 }
 .af-success-chat:hover { color: var(--color-accent-ice); }
+.af-success .af-success-note { font-size: 0.8rem; color: rgba(255,255,255,0.72); }
+.af-success .btn-apply { margin-top: 6px; }
 
 /* ---------------------------------------------------- high-visibility apply button
    White with navy text: ~15:1 against this gradient card and ~4.6:1 against the
@@ -1023,6 +1025,7 @@ ol.steps > li::before {
 }
 .admin-field textarea { min-height: 96px; resize: vertical; }
 .admin-field input:focus, .admin-field textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(0,103,227,0.14); }
+.admin-field-help { display: block; margin-top: 2px; color: var(--color-text-muted); font-size: 0.78rem; font-weight: 400; line-height: 1.45; }
 .admin-actions { grid-column: 1 / -1; display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
 .admin-danger-btn {
   display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 10px 20px;

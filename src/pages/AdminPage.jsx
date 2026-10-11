@@ -724,14 +724,24 @@ export default function AdminPage() {
             <p className="admin-muted">Empty links are hidden on the public site. Applications are emailed to the notification email.</p>
             <form className="admin-form-grid" onSubmit={saveSettings}>
               {SETTINGS_FIELDS.map((f) => (
-                <label key={f.key} className={f.key === 'notification_email' ? 'admin-field admin-field--wide' : 'admin-field'}>
+                <label key={f.key} className={f.key === 'notification_email' || f.type === 'textarea' ? 'admin-field admin-field--wide' : 'admin-field'}>
                   <span>{f.label}</span>
-                  <input
-                    type={f.type === 'url' ? 'text' : f.type}
-                    value={settings[f.key] || ''}
-                    placeholder={f.placeholder}
-                    onChange={(e) => setSettings((s) => ({ ...s, [f.key]: e.target.value }))}
-                  />
+                  {f.type === 'textarea' ? (
+                    <textarea
+                      rows={4}
+                      value={settings[f.key] || ''}
+                      placeholder={f.placeholder}
+                      onChange={(e) => setSettings((s) => ({ ...s, [f.key]: e.target.value }))}
+                    />
+                  ) : (
+                    <input
+                      type={f.type === 'url' ? 'text' : f.type}
+                      value={settings[f.key] || ''}
+                      placeholder={f.placeholder}
+                      onChange={(e) => setSettings((s) => ({ ...s, [f.key]: e.target.value }))}
+                    />
+                  )}
+                  {f.help && <small className="admin-field-help">{f.help}</small>}
                 </label>
               ))}
               <div className="admin-actions">

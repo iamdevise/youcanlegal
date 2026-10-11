@@ -22,6 +22,9 @@ export const SETTINGS_DEFAULTS = {
   contact_email: 'contact@youcanlegal.site',
   contact_phone: '',
   notification_email: 'contact@youcanlegal.site',
+  // Sent to the applicant on WhatsApp right after a successful application.
+  whatsapp_message_template:
+    'Hello, my name is {full_name}. I have just submitted my application for {program} on the YouCanLegal website and I am requesting approval. Country: {citizenship}. Email: {email}. Thank you!',
   // Round-robin chat agent assignment — managed in the admin "Chat contacts" tab.
   chat_round_robin: 'off',
 };
@@ -46,6 +49,13 @@ export const SETTINGS_FIELDS = [
   },
   { key: 'contact_phone', label: 'Public contact phone', placeholder: '+48 000 000 000', type: 'text' },
   { key: 'notification_email', label: 'Send applications to (notification email)', placeholder: 'contact@youcanlegal.site', type: 'email' },
+  {
+    key: 'whatsapp_message_template',
+    label: 'WhatsApp message sent after an application',
+    help: 'Placeholders you can use: {full_name}, {program}, {citizenship}, {email}.',
+    placeholder: 'Hello, my name is {full_name}. …',
+    type: 'textarea',
+  },
 ];
 
 let cache = null;

@@ -6,6 +6,9 @@ import CountryCombobox from './CountryCombobox';
 import ThemedSelect from './ThemedSelect';
 import { COUNTRY_OFFERS, EU_OFFERS } from '../../data/joboffers';
 import { offerByProgram, offerConsentText, offerFootnote } from '../../lib/offerNotice';
+import { fetchChatContacts, resolveContact } from '../../lib/chatContacts';
+import { SETTINGS_DEFAULTS, fetchSiteSettings } from '../../lib/settings';
+import { WhatsAppIcon } from '../common/icons';
 import ChatLink from '../chat/ChatLink';
 
 // The one and only application form, shared by the Apply popup (variant
@@ -43,6 +46,19 @@ function messageForCode(code, serverMessage) {
   }
 }
 
+/** Fill the admin's WhatsApp message template from the data just submitted. */
+function fillTemplate(template, data) {
+  const t = String(template || '');
+  return t
+    .replace(/\{full_name\}/g, () => data.full_name || '')
+    .replace(/\{program\}/g, () => data.program || '')
+    .replace(/\{citizenship\}/g, () => data.citizenship || '')
+    .replace(/\{email\}/g, () => data.email || '')
+    .replace(/\{[^{}]*\}/g, '') // drop unknown placeholders instead of showing "undefined"
+    .trim()
+    .slice(0, 500); // keep the message comfortably under WhatsApp's length limit
+}
+
 const INITIAL = {
   citizenship: '',
   livesInPassportCountry: '',
@@ -73,6 +89,12 @@ export default function ApplyForm({ program = 'Work in the EU', variant = 'secti
   const [status, setStatus] = useState({ state: 'idle', message: '' });
   const bodyRef = useRef(null);
   const isModal = variant === 'modal';
+  // WhatsApp redirect after a successful submit. `waUrl` stays null when there
+  // is no active WhatsApp contact, in which case the plain success screen shows.
+  const [waUrl, setWaUrl] = useState(null);
+  const [waCountdown, setWaCountdown] = useState(0);
+  const waTimerRef = useRef(null);
+  const waRedirectedRef = useRef(false);
 
   const set = (key) => (event) => {
     const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
@@ -172,6 +194,46 @@ export default function ApplyForm({ program = 'Work in the EU', variant = 'secti
     if (step < 3) goNext();
   };
 
+  // Clean up the WhatsApp redirect timer if this form unmounts (e.g. the popup
+  // is closed before the redirect fires).
+  useEffect(() => {
+    return () => {
+      if (waTimerRef.current) {
+        window.clearInterval(waTimerRef.current);
+        waTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  // Stop the auto-redirect (e.g. when the applicant taps the button themselves).
+  const stopWaRedirect = () => {
+    waRedirectedRef.current = true;
+    if (waTimerRef.current) {
+      window.clearInterval(waTimerRef.current);
+      waTimerRef.current = null;
+    }
+    setWaCountdown(0);
+  };
+
+  // Navigate to WhatsApp after a short delay. Mobile browsers block window.open
+  // after an await, so navigate with window.location.assign instead.
+  const startWaRedirect = (url) => {
+    if (waRedirectedRef.current) return;
+    let remaining = 3;
+    setWaCountdown(remaining);
+    waTimerRef.current = window.setInterval(() => {
+      remaining -= 1;
+      if (remaining <= 0) {
+        window.clearInterval(waTimerRef.current);
+        waTimerRef.current = null;
+        waRedirectedRef.current = true;
+        window.location.assign(url);
+      } else {
+        setWaCountdown(remaining);
+      }
+    }, 1000);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     for (const which of [1, 2, 3]) {
@@ -211,10 +273,31 @@ export default function ApplyForm({ program = 'Work in the EU', variant = 'secti
         setStatus({ state: 'error', message: messageForCode(data.code, data.error) });
         return;
       }
+      // Resolve the admin's WhatsApp contact and build the redirect URL BEFORE
+      // showing the success state, so the "Open WhatsApp now" button is ready
+      // the moment it renders. Any failure here just falls back to the plain
+      // thank-you screen — the application is already saved and emailed.
+      let nextWaUrl = null;
+      try {
+        const contacts = await fetchChatContacts();
+        const contact = await resolveContact(contacts, 'whatsapp');
+        if (contact && contact.value) {
+          const settings = await fetchSiteSettings();
+          const template = settings?.whatsapp_message_template || SETTINGS_DEFAULTS.whatsapp_message_template;
+          const message = fillTemplate(template, payload);
+          nextWaUrl = `${contact.value}?text=${encodeURIComponent(message)}`;
+        }
+      } catch {
+        nextWaUrl = null;
+      }
+
+      setWaUrl(nextWaUrl);
       setStatus({ state: 'success', message: '' });
       setForm(INITIAL);
       setStep(1);
       if (onSuccess) onSuccess();
+
+      if (nextWaUrl) startWaRedirect(nextWaUrl);
     } catch (err) {
       // fetch itself threw → the visitor is offline or the network broke.
       console.error('[apply] network failure during submit:', err);
@@ -448,10 +531,32 @@ export default function ApplyForm({ program = 'Work in the EU', variant = 'secti
           <span className="af-success-icon" aria-hidden="true">
             <Check size={30} strokeWidth={3} />
           </span>
-          <strong>Thank you, we will contact you on WhatsApp/email.</strong>
-          <p>Your application has been received. Our team will reach out to schedule your free consultation.</p>
-          {/* Chat CTA on the success screen — shows whichever types are active. */}
-          <ChatLink className="af-success-chat" />
+          {waUrl ? (
+            <>
+              <strong>Application submitted ✔</strong>
+              <p>We are sending you to WhatsApp so our team can approve your application. If nothing happens, tap the button below.</p>
+              <p className="af-success-note" aria-live="polite">
+                Opening WhatsApp{waCountdown > 0 ? ` in ${waCountdown}…` : '…'}
+              </p>
+              <a
+                className="btn-apply"
+                href={waUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={stopWaRedirect}
+              >
+                <WhatsAppIcon size={20} />
+                Open WhatsApp now
+              </a>
+            </>
+          ) : (
+            <>
+              <strong>Thank you, we will contact you on WhatsApp/email.</strong>
+              <p>Your application has been received. Our team will reach out to schedule your free consultation.</p>
+              {/* Chat CTA on the success screen — hidden when the WhatsApp button is shown. */}
+              <ChatLink className="af-success-chat" />
+            </>
+          )}
           {onCancel && (
             <button type="button" className="btn-af-secondary" onClick={onCancel}>
               Close
