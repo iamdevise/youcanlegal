@@ -638,6 +638,11 @@ export default function AdminPage() {
                   placeholder={contactDraft.type === 'whatsapp' ? '+254 700 000 000' : '@youcanlegal'}
                   onChange={(e) => setContactDraft((d) => ({ ...d, value: e.target.value }))}
                 />
+                {contactDraft.type === 'whatsapp' && (
+                  <small className="admin-field-help">
+                    This is the number applicants are sent to after they apply. Use the full international number.
+                  </small>
+                )}
               </label>
               <div className="admin-actions">
                 <button type="submit" className="btn-apply btn-apply--compact">
