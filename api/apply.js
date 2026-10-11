@@ -18,7 +18,7 @@ import { createClient } from '@supabase/supabase-js';
 // and resets on cold start — it is a bot guard, not a quota. Raised to 10 per
 // 10 minutes so it does not block testers.
 
-const DEFAULT_NOTIFY_EMAIL = 'polystaradmin@gmail.com';
+const DEFAULT_NOTIFY_EMAIL = 'contact@youcanlegal.site';
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 
 const RATE_WINDOW_MS = 10 * 60 * 1000;
@@ -51,6 +51,13 @@ function clientIp(req) {
 
 function str(value) {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+// True when the Resend sender address is on the owner's verified domain.
+// Accepts "Name <email>" (what the owner is told to set) or a bare address.
+function senderUsesCustomDomain(from) {
+  const match = String(from || '').match(/([^\s<]+@[^\s>]+)/);
+  return Boolean(match && /@youcanlegal\.site$/i.test(match[1]));
 }
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
@@ -170,7 +177,7 @@ async function resolveNotifyEmail(supabase) {
 async function sendEmail(row, notifyEmail) {
   const apiKey = str(process.env.RESEND_API_KEY);
   if (!apiKey) return false; // caller decides whether this is fatal
-  const sender = str(process.env.RESEND_FROM) || 'onboarding@resend.dev';
+  const sender = str(process.env.RESEND_FROM) || 'Applications <applications@youcanlegal.site>';
   const { html, text } = emailBody(row);
   const response = await fetch(RESEND_ENDPOINT, {
     method: 'POST',
@@ -207,7 +214,10 @@ export default async function handler(req, res) {
         ok: true,
         supabaseConfigured,
         resendConfigured: Boolean(str(process.env.RESEND_API_KEY)),
-        // 'env' = NOTIFY_EMAIL set, 'default' = the built-in testing address
+        // True when RESEND_FROM uses the owner's @youcanlegal.site domain, so the
+        // owner can confirm the sender is verified without opening any logs.
+        senderIsCustomDomain: senderUsesCustomDomain(process.env.RESEND_FROM),
+        // 'env' = NOTIFY_EMAIL set, 'default' = the built-in address
         notifyEmailSource: notifyEmail ? 'env' : 'default',
       });
     }

@@ -19,9 +19,9 @@ export const SETTINGS_DEFAULTS = {
   tiktok_url: 'https://www.tiktok.com/@you_can_legal',
   youtube_url: 'https://www.youtube.com/@youcanlegal',
   linkedin_url: 'https://www.linkedin.com/company/you-can-legal/',
-  contact_email: 'hello@youcan.legal',
+  contact_email: 'contact@youcanlegal.site',
   contact_phone: '',
-  notification_email: 'polystaradmin@gmail.com',
+  notification_email: 'contact@youcanlegal.site',
   // Round-robin chat agent assignment — managed in the admin "Chat contacts" tab.
   chat_round_robin: 'off',
 };
@@ -41,11 +41,11 @@ export const SETTINGS_FIELDS = [
   {
     key: 'contact_email',
     label: "Contact email shown on the website (used in 'please contact us at')",
-    placeholder: 'hello@youcan.legal',
+    placeholder: 'contact@youcanlegal.site',
     type: 'email',
   },
   { key: 'contact_phone', label: 'Public contact phone', placeholder: '+48 000 000 000', type: 'text' },
-  { key: 'notification_email', label: 'Send applications to (notification email)', placeholder: 'polystaradmin@gmail.com', type: 'email' },
+  { key: 'notification_email', label: 'Send applications to (notification email)', placeholder: 'contact@youcanlegal.site', type: 'email' },
 ];
 
 let cache = null;
